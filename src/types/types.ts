@@ -13,10 +13,6 @@ export interface Tender {
   status: 'Open' | 'Closed' | 'Under Review' | 'Awarded';
   updatedOn: string;
   aiSummary?: string;
-  statusIndicator?: {
-    text: string;
-    ago: string;
-  };
 }
 
 export interface FilterState {
