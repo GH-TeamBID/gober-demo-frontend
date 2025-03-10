@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Filter, ArrowUp, ArrowDown } from 'lucide-react';
 import { SortField, SortDirection, SortState, Tender, FilterState } from '@/types/types';
 import { Button } from '@/components/ui/button';
-import TenderCard from './TenderCard';
+import TenderListRow from './TenderListRow';
 import FilterPanel from './FilterPanel';
 
 interface TenderListProps {
@@ -153,26 +153,63 @@ const TenderList = ({
         )}
       </div>
       
-      {/* Tenders Grid */}
+      {/* Tenders List Table */}
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, index) => (
+        <div className="space-y-4">
+          {[...Array(5)].map((_, index) => (
             <div
               key={index}
-              className="h-96 animate-pulse rounded-lg bg-gray-200 dark:bg-gober-primary-800/50"
+              className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gober-primary-800/50"
             />
           ))}
         </div>
       ) : tenders.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tenders.map((tender) => (
-            <TenderCard
-              key={tender.id}
-              tender={tender}
-              isSaved={savedTenderIds.includes(tender.id)}
-              onToggleSave={onToggleSave}
-            />
-          ))}
+        <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
+          {/* Table Header */}
+          <div className="grid grid-cols-10 gap-4 py-3 px-4 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Tender ID
+            </div>
+            <div className="col-span-2 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Title & Description
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Submit On
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              No. of Lots
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Organisation
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Budget
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Location
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Contract Type
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300">
+              Category
+            </div>
+            <div className="col-span-1 text-sm font-medium text-gray-600 dark:text-gray-300 text-right">
+              Actions
+            </div>
+          </div>
+          
+          {/* Table Rows */}
+          <div className="divide-y divide-gray-200 dark:divide-gray-700">
+            {tenders.map((tender) => (
+              <TenderListRow
+                key={tender.id}
+                tender={tender}
+                isSaved={savedTenderIds.includes(tender.id)}
+                onToggleSave={onToggleSave}
+              />
+            ))}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center py-16 text-center">

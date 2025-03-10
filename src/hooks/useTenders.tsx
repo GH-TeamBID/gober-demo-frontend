@@ -1,10 +1,85 @@
-
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Tender, FilterState, SortState } from '@/types/types';
 import { useToast } from '@/components/ui/use-toast';
 
 // Mock data for demonstration
 const MOCK_TENDERS: Tender[] = [
+  {
+    id: 'T-156980',
+    title: 'Construction of a New Health Center in Valencia',
+    description: 'The Valencia City Council invites bids for the construction of a new health center to serve the growing population in the eastern district.',
+    submitOn: '2025-03-31',
+    lots: 3,
+    organisation: 'Institute of Cantabrian Social services',
+    budget: 20000000,
+    location: 'Valencia',
+    contractType: 'Open',
+    category: '98131000 Healthcare Services',
+    status: 'Open',
+    updatedOn: '2023-10-01',
+    aiSummary: 'This tender seeks proposals for a new healthcare facility in Valencia. The project includes construction of a multi-story building with specialized medical facilities.',
+    statusIndicator: {
+      text: 'Open',
+      ago: '15 hours ago'
+    }
+  },
+  {
+    id: 'T-156981',
+    title: 'Construction of a New Health Center in Valencia',
+    description: 'The Valencia City Council invites bids for the construction of a new health center to serve the growing population in the eastern district.',
+    submitOn: '2025-03-31',
+    lots: 3,
+    organisation: 'Institute of Cantabrian Social services',
+    budget: 20000000,
+    location: 'Valencia',
+    contractType: 'Open',
+    category: '98131000 Healthcare Services',
+    status: 'Open',
+    updatedOn: '2023-09-15',
+    aiSummary: 'This tender seeks proposals for a new healthcare facility in Valencia. The project includes construction of a multi-story building with specialized medical facilities.',
+    statusIndicator: {
+      text: 'Open',
+      ago: '2 Days back'
+    }
+  },
+  {
+    id: 'T-156982',
+    title: 'Construction of a New Health Center in Valencia',
+    description: 'The Valencia City Council invites bids for the construction of a new health center to serve the growing population in the eastern district.',
+    submitOn: '2025-03-31',
+    lots: 3,
+    organisation: 'Institute of Cantabrian Social services',
+    budget: 20000000,
+    location: 'Valencia',
+    contractType: 'Open',
+    category: '98131000 Healthcare Services',
+    status: 'Open',
+    updatedOn: '2023-08-01',
+    aiSummary: 'This tender seeks proposals for a new healthcare facility in Valencia. The project includes construction of a multi-story building with specialized medical facilities.',
+    statusIndicator: {
+      text: 'Open',
+      ago: '1st Mar, 2025'
+    }
+  },
+  {
+    id: 'T-156983',
+    title: 'Construction of a New Health Center in Valencia',
+    description: 'The Valencia City Council invites bids for the construction of a new health center to serve the growing population in the eastern district.',
+    submitOn: '2025-03-31',
+    lots: 3,
+    organisation: 'Institute of Cantabrian Social services',
+    budget: 20000000,
+    location: 'Valencia',
+    contractType: 'Open',
+    category: '98131000 Healthcare Services',
+    status: 'Open',
+    updatedOn: '2023-09-28',
+    aiSummary: 'This tender seeks proposals for a new healthcare facility in Valencia. The project includes construction of a multi-story building with specialized medical facilities.',
+    statusIndicator: {
+      text: 'Open',
+      ago: '5 hours ago'
+    }
+  },
   {
     id: 'T-2023-001',
     title: 'Healthcare Technology Infrastructure Upgrade',
