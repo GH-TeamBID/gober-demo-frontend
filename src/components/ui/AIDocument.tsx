@@ -1,6 +1,6 @@
 
 import { useState, useRef } from 'react';
-import { FileDown, Save } from 'lucide-react';
+import { FileDown, Save, Edit, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,6 +13,7 @@ interface AIDocumentProps {
 const AIDocument = ({ aiDocument, onSave }: AIDocumentProps) => {
   const [document, setDocument] = useState(aiDocument);
   const [isSaving, setIsSaving] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   
   const handleSave = async () => {
@@ -21,6 +22,7 @@ const AIDocument = ({ aiDocument, onSave }: AIDocumentProps) => {
     await new Promise(resolve => setTimeout(resolve, 500));
     onSave(document);
     setIsSaving(false);
+    setIsEditing(false);
   };
   
   const handleExport = (format: 'docx' | 'pdf') => {
@@ -45,23 +47,51 @@ const AIDocument = ({ aiDocument, onSave }: AIDocumentProps) => {
     }
   };
   
+  const toggleEditMode = () => {
+    setIsEditing(!isEditing);
+  };
+  
   return (
     <Card className="shadow-md border-gray-200 dark:border-gray-700 overflow-hidden">
-      <CardHeader className="pb-3">
+      <CardHeader className="pb-3 flex flex-row items-center justify-between">
         <CardTitle className="text-xl">AI Document (Markdown Format)</CardTitle>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="flex items-center gap-1"
+          onClick={toggleEditMode}
+        >
+          {isEditing ? (
+            <>
+              <Check className="h-4 w-4" />
+              <span>Done</span>
+            </>
+          ) : (
+            <>
+              <Edit className="h-4 w-4" />
+              <span>Edit</span>
+            </>
+          )}
+        </Button>
       </CardHeader>
       <CardContent>
         <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
           This document supports Markdown formatting for detailed tender analysis.
         </div>
-        <Textarea
-          ref={textareaRef}
-          value={document}
-          onChange={handleChange}
-          onFocus={handleTextareaFocus}
-          placeholder="AI-generated document will appear here. This supports markdown formatting..."
-          className="min-h-[400px] resize-y border-gray-200 focus:border-gober-accent-500 transition-all duration-200 font-mono"
-        />
+        {isEditing ? (
+          <Textarea
+            ref={textareaRef}
+            value={document}
+            onChange={handleChange}
+            onFocus={handleTextareaFocus}
+            placeholder="AI-generated document will appear here. This supports markdown formatting..."
+            className="min-h-[400px] resize-y border-gray-200 focus:border-gober-accent-500 transition-all duration-200 font-mono"
+          />
+        ) : (
+          <div className="min-h-[400px] border rounded-md p-4 font-mono text-sm overflow-auto whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/30">
+            {document ? document : 'No AI document available for this tender.'}
+          </div>
+        )}
       </CardContent>
       <CardFooter className="flex justify-between border-t pt-4 bg-gray-50 dark:bg-gober-primary-700/30">
         <div className="flex gap-2">
@@ -84,15 +114,17 @@ const AIDocument = ({ aiDocument, onSave }: AIDocumentProps) => {
             <span>PDF</span>
           </Button>
         </div>
-        <Button
-          size="sm"
-          className="flex items-center gap-1 bg-gober-accent-500 hover:bg-gober-accent-600"
-          onClick={handleSave}
-          disabled={isSaving}
-        >
-          <Save className="h-4 w-4" />
-          <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
-        </Button>
+        {isEditing && (
+          <Button
+            size="sm"
+            className="flex items-center gap-1 bg-gober-accent-500 hover:bg-gober-accent-600"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            <Save className="h-4 w-4" />
+            <span>{isSaving ? 'Saving...' : 'Save Changes'}</span>
+          </Button>
+        )}
       </CardFooter>
     </Card>
   );

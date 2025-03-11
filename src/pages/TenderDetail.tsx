@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Heart } from 'lucide-react';
 import { format } from 'date-fns';
 import { useTenders } from '@/hooks/useTenders';
 import Layout from '@/components/layout/Layout';
-import AIEditor from '@/components/ui/AIEditor';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
@@ -44,18 +42,6 @@ const TenderDetail = () => {
     setIsLoading(false);
   }, [id, getTenderById, navigate]);
   
-  const handleSaveAISummary = (summary: string) => {
-    if (!tender) return;
-    
-    const updatedTender = {
-      ...tender,
-      aiSummary: summary,
-    };
-    
-    updateTender(updatedTender);
-    setTender(updatedTender);
-  };
-
   const handleSaveAIDocument = (document: string) => {
     if (!tender) return;
     
@@ -268,10 +254,7 @@ const TenderDetail = () => {
               
               {/* AI Summary */}
               <div>
-                <AISummary 
-                  aiSummary={tender.aiSummary || ''} 
-                  onSave={handleSaveAISummary} 
-                />
+                <AISummary aiSummary={tender.aiSummary || ''} />
               </div>
             </div>
           </TabsContent>
