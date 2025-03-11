@@ -1,22 +1,48 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Tender } from '@/types/types';
+import { Tender, SortField, SortState } from '@/types/types';
 import TenderCard from './TenderCard';
+import { ArrowUp, ArrowDown } from 'lucide-react';
 
 interface TenderResultsProps {
   tenders: Tender[];
   isLoading: boolean;
   savedTenderIds: string[];
   onToggleSave: (tenderId: string) => void;
+  sort: SortState;
+  onSort: (sort: SortState) => void;
 }
 
 const TenderResults = ({ 
   tenders, 
   isLoading, 
   savedTenderIds, 
-  onToggleSave 
+  onToggleSave,
+  sort,
+  onSort
 }: TenderResultsProps) => {
+  const handleSort = (field: SortField) => {
+    const direction = sort.field === field && sort.direction === 'asc' ? 'desc' : 'asc';
+    onSort({ field, direction });
+  };
+  
+  const getSortIcon = (field: SortField) => {
+    if (sort.field !== field) return null;
+    
+    return sort.direction === 'asc' ? (
+      <ArrowUp className="h-4 w-4 ml-1" />
+    ) : (
+      <ArrowDown className="h-4 w-4 ml-1" />
+    );
+  };
+
+  const getColumnHeaderClass = (field: SortField) => {
+    return `text-xs font-medium cursor-pointer hover:text-gober-accent-500 flex items-center ${
+      sort.field === field ? 'text-gober-accent-500' : 'text-gray-600 dark:text-gray-400'
+    }`;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4">
@@ -43,13 +69,80 @@ const TenderResults = ({
 
   return (
     <>
-      <div className="space-y-4">
+      {/* Column Headers */}
+      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 dark:bg-gober-primary-800/50 rounded-t-lg mb-1">
+        {/* ID */}
+        <div className="col-span-1" onClick={() => handleSort('id')}>
+          <span className={getColumnHeaderClass('id')}>
+            ID {getSortIcon('id')}
+          </span>
+        </div>
+        
+        {/* Title */}
+        <div className="col-span-4" onClick={() => handleSort('title')}>
+          <span className={getColumnHeaderClass('title')}>
+            Title {getSortIcon('title')}
+          </span>
+        </div>
+        
+        {/* Submit On */}
+        <div className="col-span-1" onClick={() => handleSort('submitOn')}>
+          <span className={getColumnHeaderClass('submitOn')}>
+            Submit On {getSortIcon('submitOn')}
+          </span>
+        </div>
+        
+        {/* Lots */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Lots
+          </span>
+        </div>
+        
+        {/* Organization */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Organization
+          </span>
+        </div>
+        
+        {/* Budget */}
+        <div className="col-span-1" onClick={() => handleSort('budget')}>
+          <span className={getColumnHeaderClass('budget')}>
+            Budget {getSortIcon('budget')}
+          </span>
+        </div>
+        
+        {/* Location */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Location
+          </span>
+        </div>
+        
+        {/* Contract Type */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Contract Type
+          </span>
+        </div>
+        
+        {/* Category */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Category
+          </span>
+        </div>
+      </div>
+
+      <div className="space-y-2">
         {tenders.map((tender) => (
           <TenderCard 
             key={tender.id}
             tender={tender}
             isSaved={savedTenderIds.includes(tender.id)}
             onToggleSave={onToggleSave}
+            showHeaders={false}
           />
         ))}
       </div>

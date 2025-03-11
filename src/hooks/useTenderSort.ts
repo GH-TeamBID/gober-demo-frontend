@@ -14,6 +14,10 @@ export const useTenderSort = (tenders: Tender[]) => {
       
       // Determine values to compare based on sort field
       switch (sort.field) {
+        case 'id':
+          compareA = a.id;
+          compareB = b.id;
+          break;
         case 'budget':
           compareA = a.budget;
           compareB = b.budget;
@@ -27,8 +31,8 @@ export const useTenderSort = (tenders: Tender[]) => {
           compareB = new Date(b.updatedOn).getTime();
           break;
         case 'title':
-          compareA = a.title;
-          compareB = b.title;
+          compareA = a.title.toLowerCase();
+          compareB = b.title.toLowerCase();
           break;
         default:
           compareA = new Date(a.updatedOn).getTime();

@@ -4,7 +4,6 @@ import { Filter } from 'lucide-react';
 import { SortState, Tender, FilterState } from '@/types/types';
 import { Button } from '@/components/ui/button';
 import FilterPanel from './FilterPanel';
-import TenderSortHeader from './TenderSortHeader';
 import TenderResults from './TenderResults';
 
 interface TenderListProps {
@@ -49,10 +48,8 @@ const TenderList = ({
   
   return (
     <div className="space-y-6">
-      {/* Sorting and Filter Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <TenderSortHeader sort={sort} onSort={onSort} />
-        
+      {/* Filter Controls */}
+      <div className="flex flex-wrap items-center justify-end gap-4">
         <Button
           variant="outline"
           size="sm"
@@ -86,6 +83,8 @@ const TenderList = ({
         isLoading={isLoading}
         savedTenderIds={savedTenderIds}
         onToggleSave={onToggleSave}
+        sort={sort}
+        onSort={onSort}
       />
       
       {/* Filter Panel */}

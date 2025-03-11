@@ -1,4 +1,3 @@
-
 export interface Tender {
   id: string;
   title: string;
@@ -26,7 +25,7 @@ export interface FilterState {
   status: string[];
 }
 
-export type SortField = 'budget' | 'submitOn' | 'updatedOn' | 'title';
+export type SortField = 'budget' | 'submitOn' | 'updatedOn' | 'title' | 'id';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {

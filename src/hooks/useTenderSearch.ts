@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from 'react';
+import { Tender } from '@/types/types';
 
 export const useTenderSearch = () => {
   const [searchQuery, setSearchQuery] = useState('');

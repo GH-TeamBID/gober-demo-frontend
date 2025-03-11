@@ -11,9 +11,15 @@ interface TenderCardProps {
   tender: Tender;
   isSaved: boolean;
   onToggleSave: (tenderId: string) => void;
+  showHeaders?: boolean;
 }
 
-const TenderCard = ({ tender, isSaved, onToggleSave }: TenderCardProps) => {
+const TenderCard = ({ 
+  tender, 
+  isSaved, 
+  onToggleSave,
+  showHeaders = true 
+}: TenderCardProps) => {
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-AU', {
       style: 'currency',
@@ -28,13 +34,13 @@ const TenderCard = ({ tender, isSaved, onToggleSave }: TenderCardProps) => {
         <div className="grid grid-cols-12 gap-4">
           {/* Tender ID */}
           <div className="col-span-2 sm:col-span-1">
-            <div className="text-xs text-gray-500 mb-1">ID</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">ID</div>}
             <div className="text-sm font-medium">{tender.id}</div>
           </div>
           
           {/* Title and Description */}
           <div className="col-span-10 sm:col-span-5 md:col-span-4">
-            <div className="text-xs text-gray-500 mb-1">Title</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Title</div>}
             <Link to={`/tender/${tender.id}`} className="hover:text-gober-accent-500">
               <h3 className="text-sm font-semibold">{tender.title}</h3>
             </Link>
@@ -43,49 +49,49 @@ const TenderCard = ({ tender, isSaved, onToggleSave }: TenderCardProps) => {
           
           {/* Created On */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1">
-            <div className="text-xs text-gray-500 mb-1">Submit On</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Submit On</div>}
             <div className="text-sm">{new Date(tender.submitOn).toLocaleDateString()}</div>
           </div>
           
           {/* No of Lots */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1">
-            <div className="text-xs text-gray-500 mb-1">Lots</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Lots</div>}
             <div className="text-sm">{tender.lots}</div>
           </div>
           
           {/* Organization */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1">
-            <div className="text-xs text-gray-500 mb-1">Organization</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Organization</div>}
             <div className="text-sm truncate">{tender.organisation}</div>
           </div>
           
           {/* Budget */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1">
-            <div className="text-xs text-gray-500 mb-1">Budget</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Budget</div>}
             <div className="text-sm font-medium">{formatCurrency(tender.budget)}</div>
           </div>
           
           {/* Location */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:block">
-            <div className="text-xs text-gray-500 mb-1">Location</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Location</div>}
             <div className="text-sm">{tender.location}</div>
           </div>
           
           {/* Contract Type */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:block">
-            <div className="text-xs text-gray-500 mb-1">Contract Type</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Contract Type</div>}
             <div className="text-sm">{tender.contractType}</div>
           </div>
           
           {/* Category */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
-            <div className="text-xs text-gray-500 mb-1">Category</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Category</div>}
             <div className="text-sm">{tender.category}</div>
           </div>
           
           {/* Status */}
           <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
-            <div className="text-xs text-gray-500 mb-1">Status</div>
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Status</div>}
             <div className="text-sm flex items-center gap-1">
               <TenderStatusIcon status={tender.status} />
               <span>{tender.status}</span>
