@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
 
 // Interface for reference data
 interface Reference {
@@ -83,53 +84,12 @@ const AIDocument = ({
     setIsEditing(!isEditing);
   };
 
-  // Parse markdown text and render it properly
-  const renderMarkdown = (text: string) => {
-    if (!text) return null;
-
-    // Convert markdown headings (# Heading)
-    let formattedText = text.replace(/^### (.*$)/gm, '<h3 class="text-xl font-medium mt-4 mb-2">$1</h3>');
-    formattedText = formattedText.replace(/^## (.*$)/gm, '<h2 class="text-2xl font-medium mt-6 mb-3">$1</h2>');
-    formattedText = formattedText.replace(/^# (.*$)/gm, '<h1 class="text-3xl font-semibold mt-6 mb-4">$1</h1>');
-    
-    // Convert markdown lists
-    formattedText = formattedText.replace(/^\* (.*$)/gm, '<li class="ml-6 list-disc">$1</li>');
-    formattedText = formattedText.replace(/^\d+\. (.*$)/gm, '<li class="ml-6 list-decimal">$1</li>');
-    
-    // Convert bold and italic text
-    formattedText = formattedText.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-    formattedText = formattedText.replace(/\*(.*?)\*/g, '<em>$1</em>');
-    
-    // Convert paragraphs (lines with content)
-    formattedText = formattedText.replace(/^(?!<[hl]|<li)(.*$)/gm, function(match) {
-      if (match.trim() === '') return '<br>';
-      return '<p class="mb-3">' + match + '</p>';
-    });
-    
-    // Group list items
-    formattedText = formattedText.replace(/<li class="ml-6 list-disc">(.*?)<\/li>/g, function(match, p1) {
-      return '<ul class="mb-4">' + match + '</ul>';
-    }).replace(/<\/ul><ul class="mb-4">/g, '');
-    
-    formattedText = formattedText.replace(/<li class="ml-6 list-decimal">(.*?)<\/li>/g, function(match, p1) {
-      return '<ol class="mb-4">' + match + '</ol>';
-    }).replace(/<\/ol><ol class="mb-4">/g, '');
-
-    return formattedText;
-  };
-
   // Process document text to render references
   const renderDocumentWithReferences = () => {
     if (!document) return 'No AI document available for this tender.';
 
-    // First, render the markdown
-    let formattedText = renderMarkdown(document);
-
-    // Then, process the references
     // Use regex to find reference patterns like [1], [2], etc.
-    const parts = formattedText.split(/(\[\d+\])/);
-    
-    return parts.map((part, index) => {
+    return document.split(/(\[\d+\])/).map((part, index) => {
       // Check if the part matches the reference pattern
       const refMatch = part.match(/\[(\d+)\]/);
       
@@ -166,11 +126,6 @@ const AIDocument = ({
     });
   };
 
-  // Helper function to safely render HTML from string
-  const createMarkup = (html: string) => {
-    return { __html: html };
-  };
-
   return (
     <Card className="shadow-md border-gray-200 dark:border-gray-700 overflow-hidden">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
@@ -203,12 +158,8 @@ const AIDocument = ({
             className="min-h-[400px] resize-y border-gray-200 focus:border-gober-accent-500 transition-all duration-200 font-mono" 
           />
         ) : (
-          <div className="min-h-[400px] border rounded-md p-4 font-serif text-sm overflow-auto bg-gray-50 dark:bg-gray-900/30 prose prose-sm max-w-none">
-            {typeof renderDocumentWithReferences() === 'string' ? (
-              <div dangerouslySetInnerHTML={createMarkup(renderDocumentWithReferences() as string)} />
-            ) : (
-              renderDocumentWithReferences()
-            )}
+          <div className="min-h-[400px] border rounded-md p-4 font-mono text-sm overflow-auto whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/30">
+            {renderDocumentWithReferences()}
           </div>
         )}
       </CardContent>
