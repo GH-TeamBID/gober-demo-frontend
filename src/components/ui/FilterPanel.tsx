@@ -4,7 +4,7 @@ import { Calendar as CalendarIcon, ChevronDown, X } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { FilterState } from '@/types/types';
-import { CATEGORIES, LOCATIONS, STATUSES } from '@/hooks/useTenders';
+import { CATEGORIES, LOCATIONS, STATUSES } from '@/data/mockTenders';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
