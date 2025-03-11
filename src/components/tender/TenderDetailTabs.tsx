@@ -2,7 +2,6 @@
 import { Tender } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TenderDetailsCard from './TenderDetailsCard';
-import AISummary from '@/components/ui/AISummary';
 import AIDocument from '@/components/ui/AIDocument';
 
 interface TenderDetailTabsProps {
@@ -32,22 +31,12 @@ const TenderDetailTabs = ({
       </TabsList>
       
       <TabsContent value="details" className="space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Tender Details */}
-          <div className="space-y-6">
-            <TenderDetailsCard 
-              tender={tender}
-              isTenderSaved={isTenderSaved}
-              toggleSaveTender={toggleSaveTender}
-              getStatusClass={getStatusClass}
-            />
-          </div>
-          
-          {/* AI Summary */}
-          <div>
-            <AISummary aiSummary={tender.aiSummary || ''} />
-          </div>
-        </div>
+        <TenderDetailsCard 
+          tender={tender}
+          isTenderSaved={isTenderSaved}
+          toggleSaveTender={toggleSaveTender}
+          getStatusClass={getStatusClass}
+        />
       </TabsContent>
       
       <TabsContent value="document">

@@ -4,6 +4,7 @@ import { Tender } from '@/types/types';
 import { Card, CardContent } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import TenderStatusActions from './TenderStatusActions';
+import { Sparkles } from 'lucide-react';
 
 interface TenderDetailsCardProps {
   tender: Tender;
@@ -56,6 +57,24 @@ const TenderDetailsCard = ({
         {/* Content */}
         <div className="p-6">
           <div className="space-y-6">
+            {/* AI Summary Section */}
+            {tender.aiSummary && (
+              <div className="mb-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
+                    AI Summary
+                  </h3>
+                  <Sparkles className="h-4 w-4 text-amber-500" />
+                </div>
+                <div className="bg-orange-50 dark:bg-amber-950/20 rounded-md p-4 text-gray-800 dark:text-gray-200 border border-orange-100 dark:border-amber-900/30">
+                  <p>{tender.aiSummary}</p>
+                </div>
+                <div className="text-xs mt-1 text-right text-gray-500">
+                  {tender.aiSummary.trim().split(/\s+/).filter(Boolean).length} words
+                </div>
+              </div>
+            )}
+            
             <div>
               <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                 Description
