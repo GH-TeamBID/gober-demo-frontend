@@ -79,9 +79,30 @@ const TenderResults = ({
         </div>
         
         {/* Title */}
-        <div className="col-span-5" onClick={() => handleSort('title')}>
+        <div className="col-span-4" onClick={() => handleSort('title')}>
           <span className={getColumnHeaderClass('title')}>
             Title {getSortIcon('title')}
+          </span>
+        </div>
+        
+        {/* Submit On */}
+        <div className="col-span-1" onClick={() => handleSort('submitOn')}>
+          <span className={getColumnHeaderClass('submitOn')}>
+            Submit On {getSortIcon('submitOn')}
+          </span>
+        </div>
+        
+        {/* Lots */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Lots
+          </span>
+        </div>
+        
+        {/* Organization */}
+        <div className="col-span-1">
+          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
+            Organization
           </span>
         </div>
         
@@ -112,16 +133,6 @@ const TenderResults = ({
             Category
           </span>
         </div>
-        
-        {/* Status + Submit On */}
-        <div className="col-span-2">
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-400">
-            Status & Date
-          </span>
-        </div>
-        
-        {/* Actions placeholder - empty for alignment */}
-        <div className="col-span-1"></div>
       </div>
 
       <div className="space-y-2">

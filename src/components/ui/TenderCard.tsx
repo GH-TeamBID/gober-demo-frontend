@@ -39,7 +39,7 @@ const TenderCard = ({
           </div>
           
           {/* Title and Description */}
-          <div className="col-span-10 sm:col-span-5">
+          <div className="col-span-10 sm:col-span-5 md:col-span-4">
             {showHeaders && <div className="text-xs text-gray-500 mb-1">Title</div>}
             <Link to={`/tender/${tender.id}`} className="hover:text-gober-accent-500">
               <h3 className="text-sm font-semibold">{tender.title}</h3>
@@ -47,44 +47,59 @@ const TenderCard = ({
             <p className="text-xs text-gray-600 mt-1 line-clamp-2">{tender.description}</p>
           </div>
           
+          {/* Created On */}
+          <div className="col-span-4 sm:col-span-2 md:col-span-1">
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Submit On</div>}
+            <div className="text-sm">{new Date(tender.submitOn).toLocaleDateString()}</div>
+          </div>
+          
+          {/* No of Lots */}
+          <div className="col-span-4 sm:col-span-2 md:col-span-1">
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Lots</div>}
+            <div className="text-sm">{tender.lots}</div>
+          </div>
+          
+          {/* Organization */}
+          <div className="col-span-4 sm:col-span-2 md:col-span-1">
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Organization</div>}
+            <div className="text-sm truncate">{tender.organisation}</div>
+          </div>
+          
           {/* Budget */}
-          <div className="col-span-4 sm:col-span-1">
+          <div className="col-span-4 sm:col-span-2 md:col-span-1">
             {showHeaders && <div className="text-xs text-gray-500 mb-1">Budget</div>}
             <div className="text-sm font-medium">{formatCurrency(tender.budget)}</div>
           </div>
           
           {/* Location */}
-          <div className="col-span-4 sm:col-span-1 hidden md:block">
+          <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:block">
             {showHeaders && <div className="text-xs text-gray-500 mb-1">Location</div>}
             <div className="text-sm">{tender.location}</div>
           </div>
           
           {/* Contract Type */}
-          <div className="col-span-4 sm:col-span-1 hidden md:block">
+          <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:block">
             {showHeaders && <div className="text-xs text-gray-500 mb-1">Contract Type</div>}
             <div className="text-sm">{tender.contractType}</div>
           </div>
           
           {/* Category */}
-          <div className="col-span-4 sm:col-span-1 hidden lg:block">
+          <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
             {showHeaders && <div className="text-xs text-gray-500 mb-1">Category</div>}
             <div className="text-sm">{tender.category}</div>
           </div>
           
-          {/* Status + Submit Date Combined */}
-          <div className="col-span-6 sm:col-span-2">
-            {showHeaders && <div className="text-xs text-gray-500 mb-1">Status & Date</div>}
+          {/* Status */}
+          <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
+            {showHeaders && <div className="text-xs text-gray-500 mb-1">Status</div>}
             <div className="text-sm flex items-center gap-1">
               <TenderStatusIcon status={tender.status} />
               <span>{tender.status}</span>
             </div>
-            <div className="text-xs text-gray-500 mt-1">
-              Submit by: {new Date(tender.submitOn).toLocaleDateString()}
-            </div>
           </div>
           
           {/* Actions */}
-          <div className="col-span-6 sm:col-span-1 flex items-center justify-end">
+          <div className="col-span-4 sm:col-span-2 md:col-span-1 flex items-end justify-end">
             <Button
               variant="ghost"
               size="sm"
@@ -123,6 +138,11 @@ const TenderCard = ({
           </div>
           <div>
             <span className="text-xs text-gray-500">Category:</span> {tender.category}
+          </div>
+          <div className="flex items-center gap-1">
+            <span className="text-xs text-gray-500">Status:</span>
+            <TenderStatusIcon status={tender.status} />
+            <span>{tender.status}</span>
           </div>
         </div>
       </div>
