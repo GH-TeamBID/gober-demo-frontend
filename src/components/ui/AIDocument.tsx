@@ -27,13 +27,13 @@ const AIDocument = ({ aiDocument, onSave }: AIDocumentProps) => {
   
   const handleExport = (format: 'docx' | 'pdf') => {
     // In a real app, this would generate and download the file
-    const element = document.createElement('a');
+    const element = window.document.createElement('a');
     const file = new Blob([document], { type: 'text/plain' });
     element.href = URL.createObjectURL(file);
     element.download = `tender-document.${format}`;
-    document.body.appendChild(element);
+    window.document.body.appendChild(element);
     element.click();
-    document.body.removeChild(element);
+    window.document.body.removeChild(element);
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
