@@ -1,3 +1,4 @@
+
 export interface Tender {
   id: string;
   title: string;
@@ -12,6 +13,7 @@ export interface Tender {
   status: 'Open' | 'Closed' | 'Under Review' | 'Awarded';
   updatedOn: string;
   aiSummary?: string;
+  aiDocument?: string;
 }
 
 export interface FilterState {
