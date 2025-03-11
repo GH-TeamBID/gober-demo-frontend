@@ -48,7 +48,7 @@ const TenderResults = ({
   }
   return <>
       {/* Column Headers */}
-      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-2 bg-gray-50 dark:bg-gober-primary-800/50 rounded-t-lg mb-1">
+      <div className="hidden md:grid grid-cols-12 gap-4 px-4 bg-gray-50 dark:bg-gober-primary-800/50 rounded-t-lg mb-1 py-[14px]">
         {/* ID */}
         <div className="col-span-1 flex justify-start" onClick={() => handleSort('id')}>
           <span className={getColumnHeaderClass('id')}>
