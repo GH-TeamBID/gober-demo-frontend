@@ -1,13 +1,12 @@
+
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, User } from 'lucide-react';
-import { UserSettings } from '@/components/user/UserSettings';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
   
   useEffect(() => {
@@ -70,15 +69,16 @@ const Header = () => {
           
           {/* User Profile */}
           <div className="flex items-center">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="rounded-full ml-4"
-              onClick={() => setShowSettings(true)}
-            >
-              <User className="h-5 w-5" />
-              <span className="sr-only">User settings</span>
-            </Button>
+            <Link to="/settings">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="rounded-full ml-4"
+              >
+                <User className="h-5 w-5" />
+                <span className="sr-only">User settings</span>
+              </Button>
+            </Link>
             
             {/* Mobile menu button */}
             <div className="flex md:hidden ml-2">
@@ -118,15 +118,22 @@ const Header = () => {
                 {link.name}
               </Link>
             ))}
+            
+            {/* Add Settings link to mobile menu */}
+            <Link
+              to="/settings"
+              className={`block py-2 px-4 text-base font-medium rounded-md ${
+                location.pathname === '/settings'
+                  ? 'text-gober-accent-500 bg-gober-bg-100 dark:bg-gober-primary-800/50'
+                  : 'text-gober-primary-800 dark:text-gray-300 hover:bg-gober-bg-100 dark:hover:bg-gober-primary-800/30'
+              }`}
+              onClick={() => setIsOpen(false)}
+            >
+              Settings
+            </Link>
           </div>
         </div>
       )}
-      
-      {/* User Settings Dialog */}
-      <UserSettings 
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-      />
     </header>
   );
 };
