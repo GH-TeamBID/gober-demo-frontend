@@ -1,12 +1,13 @@
-
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Menu, X, User } from 'lucide-react';
+import { UserSettings } from '@/components/user/UserSettings';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const location = useLocation();
   
   useEffect(() => {
@@ -33,13 +34,11 @@ const Header = () => {
   ];
   
   return (
-    <header 
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled 
-          ? 'bg-white/80 dark:bg-gober-primary-900/80 backdrop-blur-md shadow-sm' 
-          : 'bg-transparent'
-      }`}
-    >
+    <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      isScrolled 
+        ? 'bg-white/80 dark:bg-gober-primary-900/80 backdrop-blur-md shadow-sm' 
+        : 'bg-transparent'
+    }`}>
       <div className="container mx-auto px-4 sm:px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
@@ -71,9 +70,14 @@ const Header = () => {
           
           {/* User Profile */}
           <div className="flex items-center">
-            <Button variant="ghost" size="icon" className="rounded-full ml-4">
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full ml-4"
+              onClick={() => setShowSettings(true)}
+            >
               <User className="h-5 w-5" />
-              <span className="sr-only">User profile</span>
+              <span className="sr-only">User settings</span>
             </Button>
             
             {/* Mobile menu button */}
@@ -117,6 +121,12 @@ const Header = () => {
           </div>
         </div>
       )}
+      
+      {/* User Settings Dialog */}
+      <UserSettings 
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </header>
   );
 };
