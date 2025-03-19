@@ -9,6 +9,7 @@ import SavedTenders from "./pages/SavedTenders";
 import TenderDetail from "./pages/TenderDetail";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
+import Login from "./pages/Login";
 
 const queryClient = new QueryClient();
 
@@ -20,6 +21,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/saved" element={<SavedTenders />} />
           <Route path="/tender/:id" element={<TenderDetail />} />
           <Route path="/settings" element={<Settings />} />
