@@ -1,12 +1,12 @@
-
 import { useState } from 'react';
 import { useTenders } from '@/hooks/useTenders';
 import Layout from '@/components/layout/Layout';
 import SearchBar from '@/components/ui/SearchBar';
 import TenderList from '@/components/ui/TenderList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { TendersProvider } from '@/contexts/TendersContext';
 
-const Index = () => {
+const TendersContent = () => {
   const {
     allTenders,
     filteredTenders,
@@ -20,6 +20,7 @@ const Index = () => {
     setSort,
     toggleSaveTender,
     isTenderSaved,
+    error
   } = useTenders();
   
   const [activeTab, setActiveTab] = useState('all');
@@ -28,7 +29,9 @@ const Index = () => {
     setActiveTab(value);
   };
   
-  const savedTenderIds = savedTenders.map(tender => tender.id);
+  // Convert saved tenders to a Set of tender_hash values
+  const savedTenderIds = savedTenders.map(tender => tender.tender_hash);
+  const savedTenderIdsSet = new Set(savedTenderIds);
   
   return (
     <Layout>
@@ -42,6 +45,12 @@ const Index = () => {
             onSearch={setSearchQuery}
           />
         </div>
+        
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            Error loading tenders: {error}
+          </div>
+        )}
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="flex justify-center mb-6">
@@ -70,7 +79,7 @@ const Index = () => {
             <TenderList
               tenders={filteredTenders}
               isLoading={isLoading}
-              savedTenderIds={savedTenderIds}
+              savedTenderIds={savedTenderIdsSet}
               sort={sort}
               filters={filters}
               onToggleSave={toggleSaveTender}
@@ -84,7 +93,7 @@ const Index = () => {
               <TenderList
                 tenders={savedTenders}
                 isLoading={false}
-                savedTenderIds={savedTenderIds}
+                savedTenderIds={savedTenderIdsSet}
                 sort={sort}
                 filters={filters}
                 onToggleSave={toggleSaveTender}
@@ -103,6 +112,15 @@ const Index = () => {
         </Tabs>
       </div>
     </Layout>
+  );
+};
+
+// Wrap the entire component with TendersProvider
+const Index = () => {
+  return (
+    <TendersProvider>
+      <TendersContent />
+    </TendersProvider>
   );
 };
 

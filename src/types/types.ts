@@ -1,36 +1,34 @@
+import { TenderPreview } from '../services/tenderService';
 
-export interface Tender {
-  id: string;
-  title: string;
-  description: string;
-  submitOn: string;
-  lots: number;
-  organisation: string;
-  budget: number;
-  location: string;
-  contractType: string;
-  category: string;
-  status: 'Open' | 'Closed' | 'Under Review' | 'Awarded';
-  updatedOn: string;
-  aiSummary?: string;
-  aiDocument?: string;
-}
+export type { TenderPreview };
 
 export interface FilterState {
   budgetRange: [number, number];
   categories: string[];
   states: string[];
   dateRange: {
-    from: string | null;
-    to: string | null;
+    from: Date | string | null;
+    to: Date | string | null;
   };
   status: string[];
 }
 
-export type SortField = 'budget' | 'submitOn' | 'updatedOn' | 'title' | 'id';
+export type SortField = 
+  'tender_id' | 
+  'title' | 
+  'submission_date' | 
+  'n_lots' | 
+  'pub_org_name' | 
+  'budget.amount' | 
+  'location' | 
+  'contract_type';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortState {
   field: SortField;
   direction: SortDirection;
+}
+
+export interface ApiResponseToTenderAdapter {
+  adaptTender: (apiTender: any) => TenderPreview;
 }

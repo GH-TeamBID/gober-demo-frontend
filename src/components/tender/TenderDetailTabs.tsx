@@ -1,11 +1,10 @@
-
-import { Tender } from '@/types/types';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import TenderDetailsCard from './TenderDetailsCard';
 import AIDocument from '@/components/ui/AIDocument';
+import { TenderDetail } from '@/services/tenderService';
 
 interface TenderDetailTabsProps {
-  tender: Tender;
+  tender: TenderDetail;
   isTenderSaved: (id: string) => boolean;
   toggleSaveTender: (id: string) => void;
   handleSaveAIDocument: (document: string) => void;

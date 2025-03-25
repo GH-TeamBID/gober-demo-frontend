@@ -1,107 +1,157 @@
-
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useTenders } from '@/hooks/useTenders';
+import { useTenders } from '@/contexts/TendersContext';
 import Layout from '@/components/layout/Layout';
 import TenderHeader from '@/components/tender/TenderHeader';
 import TenderDetailTabs from '@/components/tender/TenderDetailTabs';
 import TenderDetailSkeleton from '@/components/tender/TenderDetailSkeleton';
 import { getStatusClass } from '@/utils/tenderUtils';
+import { AlertCircle, ArrowLeft } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
-// Sample AI document with reference numbers
-const sampleDocumentWithReferences = `# Tender Analysis Report
-
-## Executive Summary
-
-This tender for IT infrastructure upgrades has several key requirements that potential bidders should note. The primary goal is modernization of existing systems [1] while ensuring minimal disruption to day-to-day operations.
-
-## Key Requirements
-
-1. **Hardware Specifications**: All server equipment must meet or exceed the specifications outlined in the tender document [2].
-
-2. **Software Compatibility**: Any proposed solutions must be compatible with existing database systems and security protocols [3].
-
-3. **Budget Constraints**: The total project value cannot exceed the allocated budget of $750,000 including all materials and labor.
-
-## Timeline and Milestones
-
-The project is expected to be completed within 6 months of contract award, with key milestones as follows:
-
-- Initial assessment and planning: 2 weeks
-- Equipment procurement: 6 weeks
-- Installation and configuration: 8 weeks
-- Testing and quality assurance: 4 weeks
-- Staff training and handover: 4 weeks
-
-## Recommendations
-
-Based on our analysis, we recommend focusing on cloud-compatible solutions that allow for future scalability.`;
 
 const TenderDetail = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   
   const {
-    getTenderById,
-    updateTender,
-    isTenderSaved,
+    fetchTenderDetail,
+    currentTenderDetail,
+    loadingTenderDetail,
+    tenderDetailError,
     toggleSaveTender,
+    isTenderSaved,
+    updateTenderAIDocument,
+    clearTenderDetail
   } = useTenders();
   
-  const [tender, setTender] = useState(getTenderById(id || ''));
-  const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('details');
   
-  useEffect(() => {
-    if (!id) {
-      navigate('/');
-      return;
-    }
+  // Handle saving AI document with UI-specific logic
+  const handleSaveAIDocument = useCallback((document: string) => {
+    if (!id) return;
     
-    const tenderData = getTenderById(id);
-    if (!tenderData) {
-      navigate('/');
-      return;
-    }
-    
-    // If the tender doesn't have an AI document yet, add the sample one
-    if (!tenderData.aiDocument) {
-      const updatedTender = {
-        ...tenderData,
-        aiDocument: sampleDocumentWithReferences
-      };
-      updateTender(updatedTender);
-      setTender(updatedTender);
-    } else {
-      setTender(tenderData);
-    }
-    
-    setIsLoading(false);
-  }, [id, getTenderById, navigate, updateTender]);
+    // Call the context method but handle UI-specific behavior here
+    updateTenderAIDocument(id, document).catch(error => {
+      // This is UI-specific error handling beyond what the context does
+      console.error('Failed to save AI document in component:', error);
+    });
+  }, [id, updateTenderAIDocument]);
   
-  const handleSaveAIDocument = (document: string) => {
-    if (!tender) return;
-    
-    const updatedTender = {
-      ...tender,
-      aiDocument: document,
+  useEffect(() => {
+    const loadTenderDetails = async () => {
+      if (!id) {
+        return;
+      }
+      
+      // Clear any previous tender detail
+      clearTenderDetail();
+      
+      // Fetch the tender details from the API
+      await fetchTenderDetail(id);
     };
     
-    updateTender(updatedTender);
-    setTender(updatedTender);
-  };
+    loadTenderDetails();
+    
+    // Clean up when component unmounts
+    return () => {
+      clearTenderDetail();
+    };
+  }, [id, fetchTenderDetail, clearTenderDetail]);
   
-  if (isLoading || !tender) {
+  // Render loading state
+  if (loadingTenderDetail) {
     return <TenderDetailSkeleton />;
   }
   
+  // Render error state
+  if (tenderDetailError) {
+    return (
+      <Layout>
+        <div className="page-container">
+          <TenderHeader title="Tender Details" />
+          
+          <div className="max-w-3xl mx-auto mt-8">
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{tenderDetailError}</AlertDescription>
+            </Alert>
+            
+            <div className="text-center py-8">
+              <p className="mb-6">Unable to load tender details.</p>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate(-1)}
+                className="flex items-center gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back to tenders
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+  
+  // Render empty state
+  if (!currentTenderDetail) {
+    return (
+      <Layout>
+        <div className="page-container">
+          <TenderHeader title="Tender Details" />
+          
+          <div className="text-center py-12">
+            <div className="bg-gray-50 dark:bg-gray-800 p-8 rounded-lg max-w-xl mx-auto">
+              <h2 className="text-xl font-medium mb-4">Tender Not Found</h2>
+              <p className="text-gray-600 dark:text-gray-400 mb-6">
+                The tender you're looking for doesn't exist or has been removed.
+              </p>
+              <Button onClick={() => navigate('/')}>Return to Tenders List</Button>
+            </div>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
+  
+  // Log AI content availability with improved validation
+  const hasAiSummary = !!(currentTenderDetail.aiSummary && currentTenderDetail.aiSummary.trim() !== '');
+  const hasAiDocument = !!(currentTenderDetail.aiDocument && currentTenderDetail.aiDocument.trim() !== '');
+  
+  // Extended logging for debugging
+  if (hasAiSummary) {
+    console.log(`AI summary available for tender ${id} (${currentTenderDetail.aiSummary!.length} chars)`);
+  } else {
+    console.log(`No AI summary available for tender ${id}`);
+  }
+  
+  if (hasAiDocument) {
+    console.log(`AI document URL available: ${currentTenderDetail.aiDocument}`);
+  } else {
+    console.log(`No AI document available for tender ${id}`);
+  }
+  
+  // Log overall AI content availability
+  if (hasAiSummary && hasAiDocument) {
+    console.log(`Tender ${id} has both AI summary and document available`);
+  } else if (hasAiSummary) {
+    console.log(`Tender ${id} has only AI summary available`);
+  } else if (hasAiDocument) {
+    console.log(`Tender ${id} has only AI document available`);
+  } else {
+    console.log(`Tender ${id} has no AI content available`);
+  }
+  
+  // Render tender details
   return (
     <Layout>
       <div className="page-container">
         <TenderHeader title="Tender Details" />
         
         <TenderDetailTabs
-          tender={tender}
+          tender={currentTenderDetail}
           isTenderSaved={isTenderSaved}
           toggleSaveTender={toggleSaveTender}
           handleSaveAIDocument={handleSaveAIDocument}

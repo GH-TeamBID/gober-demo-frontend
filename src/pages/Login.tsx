@@ -1,66 +1,94 @@
-
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Lock, LogIn } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/lib/auth';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/components/ui/use-toast';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { AlertCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+
+type LocationState = {
+  from?: { pathname: string };
+};
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
+  const [error, setError] = useState<string | null>(null);
+  const { login } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Get the intended destination from location state or default to '/'
+  const fromLocation = (location.state as LocationState)?.from;
+  const from = fromLocation?.pathname || '/';
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
+    setIsLoading(true);
     
-    // Basic validation
-    if (!email || !password) {
-      toast({
-        title: "Error",
-        description: "Please enter both email and password",
-        variant: "destructive",
-      });
+    if (!email.trim()) {
+      setError('Email is required');
+      setIsLoading(false);
       return;
     }
     
-    setIsLoading(true);
-    
-    // Simulate authentication for demo
-    // In a real app, you would call your auth service here
-    setTimeout(() => {
-      // For demo purposes - accept any credentials
-      localStorage.setItem('isAuthenticated', 'true');
-      
-      toast({
-        title: "Success",
-        description: "You've successfully logged in",
-      });
-      
+    if (!password.trim()) {
+      setError('Password is required');
       setIsLoading(false);
-      navigate('/');
-    }, 1500);
+      return;
+    }
+    
+    try {
+      const success = await login(email, password);
+      
+      if (success) {
+        toast({
+          title: "Login successful",
+          description: "Welcome back!",
+        });
+        
+        // Navigate to the intended destination
+        navigate(from, { replace: true });
+      } else {
+        setError('Invalid email or password');
+      }
+    } catch (error) {
+      setError('An error occurred during login. Please try again.');
+      console.error('Login error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gober-bg-100 dark:bg-gober-primary-900 p-4">
-      <Card className="w-full max-w-md shadow-lg">
-        <CardHeader className="space-y-1 text-center">
-          <div className="flex justify-center mb-3">
-            <Lock className="h-10 w-10 text-gober-accent-500" />
-          </div>
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
-            Enter your credentials to access your account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin}>
-            <div className="space-y-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gober-bg-100 dark:bg-gober-primary-900 p-4">
+      <div className="w-full max-w-md">
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold mb-2 text-gober-primary-900 dark:text-white">GoberAI.</h1>
+          <p className="text-gray-600 dark:text-gray-400">Sign in to access your account</p>
+        </div>
+        
+        <Card className="border-gray-200 dark:border-gray-700">
+          <CardHeader>
+            <CardTitle>Login</CardTitle>
+            <CardDescription>
+              Enter your credentials to access the tender management platform
+            </CardDescription>
+          </CardHeader>
+          <form onSubmit={handleSubmit}>
+            <CardContent className="space-y-4">
+              {error && (
+                <Alert variant="destructive">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input 
@@ -73,7 +101,12 @@ const Login = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="password">Password</Label>
+                  <a href="#" className="text-sm text-gober-accent-500 hover:text-gober-accent-600">
+                    Forgot password?
+                  </a>
+                </div>
                 <Input 
                   id="password" 
                   type="password" 
@@ -83,32 +116,25 @@ const Login = () => {
                   required
                 />
               </div>
+            </CardContent>
+            <CardFooter className="flex flex-col">
               <Button 
                 type="submit" 
-                className="w-full" 
+                className="w-full bg-gober-accent-500 hover:bg-gober-accent-600"
                 disabled={isLoading}
               >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                    Signing in...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <LogIn className="h-4 w-4" />
-                    Sign in
-                  </span>
-                )}
+                {isLoading ? 'Signing in...' : 'Sign in'}
               </Button>
-            </div>
+              <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
+                Don't have an account?{' '}
+                <a href="#" className="text-gober-accent-500 hover:text-gober-accent-600">
+                  Contact your administrator
+                </a>
+              </p>
+            </CardFooter>
           </form>
-        </CardContent>
-        <CardFooter className="flex justify-center">
-          <div className="text-center text-sm text-muted-foreground">
-            <span className="text-gober-accent-500 font-medium">GoberAI</span> | Tender Management Platform
-          </div>
-        </CardFooter>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };

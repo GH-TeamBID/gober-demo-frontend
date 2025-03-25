@@ -1,22 +1,39 @@
-
-import { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, ChevronDown, X } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Calendar as CalendarIcon, ChevronDown, X, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { FilterState } from '@/types/types';
-import { CATEGORIES, LOCATIONS, STATUSES } from '@/data/mockTenders';
+import { apiClient } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion';
+
+const STATUSES = ['Open', 'Evaluation', 'Awarded', 'Result'];
+
+interface CPVCodeResponse {
+  code: string;
+  description: string;
+  es_description: string;
+}
+
+interface PaginatedCPVResponse {
+  items: CPVCodeResponse[];
+  total: number;
+  skip: number;
+  limit: number;
+  has_more: boolean;
+}
 
 interface FilterPanelProps {
   isOpen: boolean;
@@ -33,9 +50,84 @@ const FilterPanel = ({
 }: FilterPanelProps) => {
   const [localFilters, setLocalFilters] = useState<FilterState>(filters);
   
+  const [categoryInput, setCategoryInput] = useState('');
+  const [categorySearchResults, setCategorySearchResults] = useState<CPVCodeResponse[]>([]);
+  const [isSearchingCategory, setIsSearchingCategory] = useState(false);
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
+  
+  const categoryInputRef = useRef<HTMLInputElement>(null);
+  const categorySuggestionsRef = useRef<HTMLDivElement>(null);
+  
   useEffect(() => {
     setLocalFilters(filters);
   }, [filters]);
+  
+  useEffect(() => {
+    console.log("Input changed:", categoryInput);
+    
+    if (!categoryInput.trim() || categoryInput.length < 2) {
+      console.log("Input too short, hiding suggestions");
+      setCategorySearchResults([]);
+      return;
+    }
+
+    setIsSearchingCategory(true);
+    setShowCategorySuggestions(true);
+    
+    console.log("Setting up search timer for:", categoryInput);
+    const timer = setTimeout(() => {
+      console.log("Executing search for:", categoryInput);
+      searchCpvCodes(categoryInput);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [categoryInput]);
+  
+  const searchCpvCodes = async (query: string) => {
+    if (query.trim().length < 2) return;
+    
+    console.log("Searching CPV codes for:", query);
+    setIsSearchingCategory(true);
+    
+    try {
+      const params: Record<string, string | number> = {
+        limit: 10,
+        lang: 'en'
+      };
+      
+      if (/^\d+$/.test(query)) {
+        params.code = query;
+      } else {
+        params.description = query;
+      }
+      
+      console.log("API params:", params);
+      const response = await apiClient.get<PaginatedCPVResponse>('/auth/cpv-codes', { params });
+      console.log("API response:", response.data);
+      
+      setCategorySearchResults(response.data.items);
+      setShowCategorySuggestions(true);
+    } catch (error) {
+      console.error("Error fetching CPV codes:", error);
+      setCategorySearchResults([]);
+    } finally {
+      setIsSearchingCategory(false);
+    }
+  };
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (categoryInputRef.current && !categoryInputRef.current.contains(event.target as Node) &&
+          categorySuggestionsRef.current && !categorySuggestionsRef.current.contains(event.target as Node)) {
+        setShowCategorySuggestions(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   
   const handleBudgetChange = (values: number[]) => {
     setLocalFilters((prev) => ({
@@ -44,22 +136,47 @@ const FilterPanel = ({
     }));
   };
   
-  const handleCategoryChange = (category: string, checked: boolean) => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      categories: checked
-        ? [...prev.categories, category]
-        : prev.categories.filter((c) => c !== category),
-    }));
+  const handleAddCategory = (category: string) => {
+    if (category && !localFilters.categories.includes(category)) {
+      setLocalFilters(prev => ({
+        ...prev,
+        categories: [...prev.categories, category]
+      }));
+    }
+    setCategoryInput('');
+    setShowCategorySuggestions(false);
   };
   
-  const handleLocationChange = (location: string, checked: boolean) => {
-    setLocalFilters((prev) => ({
-      ...prev,
-      states: checked
-        ? [...prev.states, location]
-        : prev.states.filter((s) => s !== location),
-    }));
+  const handleCategorySelect = (cpv: CPVCodeResponse) => {
+    console.log("Selected category:", cpv);
+    const categoryValue = `${cpv.code} - ${cpv.description}`;
+    if (!localFilters.categories.includes(categoryValue)) {
+      setLocalFilters(prev => ({
+        ...prev,
+        categories: [...prev.categories, categoryValue]
+      }));
+    }
+    setCategoryInput('');
+    setShowCategorySuggestions(false);
+  };
+  
+  const handleCategoryChange = (category: string, remove: boolean) => {
+    if (remove) {
+      setLocalFilters((prev) => ({
+        ...prev,
+        categories: prev.categories.filter((c) => c !== category),
+      }));
+    }
+  };
+  
+  const handleCategoryInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    console.log("Input changing to:", value);
+    setCategoryInput(value);
+    
+    if (value.length >= 2) {
+      setShowCategorySuggestions(true);
+    }
   };
   
   const handleStatusChange = (status: string, checked: boolean) => {
@@ -88,7 +205,7 @@ const FilterPanel = ({
   
   const handleReset = () => {
     const resetFilters: FilterState = {
-      budgetRange: [0, 10000000],
+      budgetRange: [0, 20000000],
       categories: [],
       states: [],
       dateRange: {
@@ -129,16 +246,16 @@ const FilterPanel = ({
             <Label className="text-lg font-medium">Budget Range</Label>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">
-                ${localFilters.budgetRange[0].toLocaleString()}
+                {localFilters.budgetRange[0].toLocaleString()} €
               </span>
               <span className="text-sm font-medium">
-                ${localFilters.budgetRange[1].toLocaleString()}
+                {localFilters.budgetRange[1].toLocaleString()} €
               </span>
             </div>
             <Slider
               defaultValue={[localFilters.budgetRange[0], localFilters.budgetRange[1]]}
               min={0}
-              max={10000000}
+              max={20000000}
               step={50000}
               value={[localFilters.budgetRange[0], localFilters.budgetRange[1]]}
               onValueChange={handleBudgetChange}
@@ -146,65 +263,76 @@ const FilterPanel = ({
             />
           </div>
           
-          {/* Categories */}
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="categories">
-              <AccordionTrigger className="text-lg font-medium">
-                Categories
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pt-2">
-                  {CATEGORIES.map((category) => (
-                    <div key={category} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`category-${category}`}
-                        checked={localFilters.categories.includes(category)}
-                        onCheckedChange={(checked) =>
-                          handleCategoryChange(category, checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor={`category-${category}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {category}
-                      </Label>
+          <div className="space-y-3">
+            <Label className="text-lg font-medium">Categories</Label>
+            
+            <div className="flex flex-wrap gap-2 mb-2">
+              {localFilters.categories.map((category) => (
+                <Badge 
+                  key={category} 
+                  variant="secondary"
+                  className="flex items-center gap-1 py-1.5 px-3 bg-gober-bg-200 dark:bg-gober-primary-700 text-gober-primary-800 dark:text-gray-300"
+                >
+                  {category}
+                  <X 
+                    className="h-3 w-3 cursor-pointer ml-1 text-gober-primary-600" 
+                    onClick={() => handleCategoryChange(category, true)}
+                  />
+                </Badge>
+              ))}
+            </div>
+            
+            <div className="relative">
+              <Input 
+                ref={categoryInputRef}
+                value={categoryInput}
+                onChange={handleCategoryInputChange}
+                onFocus={() => {
+                  console.log("Input focused, length:", categoryInput.length);
+                  if (categoryInput.length >= 2) {
+                    setShowCategorySuggestions(true);
+                  }
+                }}
+                placeholder="Search for CPV code or description..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && categoryInput.trim()) {
+                    handleAddCategory(categoryInput.trim());
+                  }
+                }}
+              />
+              
+              {(showCategorySuggestions) && (
+                <div 
+                  ref={categorySuggestionsRef}
+                  className="absolute z-[100] w-full mt-1 bg-white dark:bg-gober-primary-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-lg max-h-60 overflow-auto"
+                >
+                  {isSearchingCategory ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-gober-accent-500 mr-2" />
+                      <span>Searching...</span>
                     </div>
-                  ))}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
-          
-          {/* States/Locations */}
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="locations">
-              <AccordionTrigger className="text-lg font-medium">
-                State
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pt-2">
-                  {LOCATIONS.map((location) => (
-                    <div key={location} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`location-${location}`}
-                        checked={localFilters.states.includes(location)}
-                        onCheckedChange={(checked) =>
-                          handleLocationChange(location, checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor={`location-${location}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {location}
-                      </Label>
+                  ) : categorySearchResults.length === 0 ? (
+                    <div className="p-4 text-center text-gray-500 dark:text-gray-400">
+                      No categories found. Try a different search term.
                     </div>
-                  ))}
+                  ) : (
+                    categorySearchResults.map(cpv => (
+                      <div
+                        key={cpv.code}
+                        className="px-4 py-2 cursor-pointer hover:bg-gober-accent-500/10 dark:hover:bg-gober-primary-700"
+                        onClick={() => handleCategorySelect(cpv)}
+                      >
+                        <div className="font-medium">{cpv.code}</div>
+                        <div className="text-sm text-gray-600 dark:text-gray-400">
+                          {cpv.description}
+                        </div>
+                      </div>
+                    ))
+                  )}
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              )}
+            </div>
+          </div>
           
           {/* Status */}
           <Accordion type="single" collapsible className="w-full">

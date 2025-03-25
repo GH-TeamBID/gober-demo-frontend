@@ -1,20 +1,30 @@
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Lock, Users, Search } from 'lucide-react';
 import { cn } from "@/lib/utils";
 import Layout from "@/components/layout/Layout";
 import PasswordSettings from '@/components/settings/PasswordSettings';
 import UsersList from '@/components/settings/UsersList';
 import SearchCriteriaSettings from '@/components/settings/SearchCriteriaSettings';
+import { useRole } from '@/hooks/useRole';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("password");
+  const { isStaff } = useRole();
 
+  // Generate tabs based on user role
   const tabs = [
     { id: "password", label: "Password", icon: <Lock className="h-4 w-4 mr-2" /> },
-    { id: "users", label: "Users", icon: <Users className="h-4 w-4 mr-2" /> },
+    // Only show Users tab for staff (admin/account_manager)
+    ...(isStaff ? [{ id: "users", label: "Users", icon: <Users className="h-4 w-4 mr-2" /> }] : []),
     { id: "criteria", label: "Search Criteria", icon: <Search className="h-4 w-4 mr-2" /> },
   ];
+  
+  // If user role changes and they're on a tab they shouldn't see, reset to password tab
+  useEffect(() => {
+    if (activeTab === "users" && !isStaff) {
+      setActiveTab("password");
+    }
+  }, [isStaff, activeTab]);
 
   return (
     <Layout>
@@ -52,7 +62,7 @@ const Settings = () => {
           <div className="col-span-12 md:col-span-9">
             <div className="bg-white dark:bg-gober-primary-800 rounded-lg shadow-sm border border-border p-6">
               {activeTab === "password" && <PasswordSettings />}
-              {activeTab === "users" && <UsersList />}
+              {activeTab === "users" && isStaff && <UsersList />}
               {activeTab === "criteria" && <SearchCriteriaSettings />}
             </div>
           </div>

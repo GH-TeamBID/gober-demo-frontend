@@ -1,13 +1,15 @@
-
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User } from 'lucide-react';
+import { Menu, X, User, LogOut } from 'lucide-react';
+import { useAuth } from '@/lib/auth';
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const { logout } = useAuth();
   
   useEffect(() => {
     // Close mobile menu when route changes
@@ -23,6 +25,11 @@ const Header = () => {
       window.removeEventListener('scroll', handleScroll);
     };
   }, [location]);
+  
+  const handleLogout = () => {
+    logout();
+    navigate('/login');
+  };
   
   const navLinks = [
     { name: 'Overview', path: '/' },
@@ -67,18 +74,30 @@ const Header = () => {
             ))}
           </nav>
           
-          {/* User Profile */}
+          {/* User Profile and Logout */}
           <div className="flex items-center">
             <Link to="/settings">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full ml-4"
+                className="rounded-full"
               >
                 <User className="h-5 w-5" />
                 <span className="sr-only">User settings</span>
               </Button>
             </Link>
+            
+            {/* Logout Button */}
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              className="rounded-full ml-2"
+              onClick={handleLogout}
+              aria-label="Logout"
+            >
+              <LogOut className="h-5 w-5 text-gober-primary-800 dark:text-gray-300 hover:text-gober-accent-500" />
+              <span className="sr-only">Logout</span>
+            </Button>
             
             {/* Mobile menu button */}
             <div className="flex md:hidden ml-2">
@@ -131,6 +150,20 @@ const Header = () => {
             >
               Settings
             </Link>
+            
+            {/* Add Logout link to mobile menu */}
+            <button
+              className="w-full text-left block py-2 px-4 text-base font-medium rounded-md text-gober-primary-800 dark:text-gray-300 hover:bg-gober-bg-100 dark:hover:bg-gober-primary-800/30"
+              onClick={() => {
+                setIsOpen(false);
+                handleLogout();
+              }}
+            >
+              <div className="flex items-center">
+                <LogOut className="h-4 w-4 mr-2" />
+                Logout
+              </div>
+            </button>
           </div>
         </div>
       )}
