@@ -92,8 +92,10 @@ const TenderDetailsCard = ({
             {/* Basic Details Section */}
             <AccordionItem value="details">
               <AccordionTrigger className="text-base font-medium">
-                <Info className="h-4 w-4 mr-2" />
-                Basic Details
+                <span className="flex items-center">
+                  <Info className="h-4 w-4 mr-2" />
+                  Basic Details
+                </span>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-2">
@@ -122,8 +124,10 @@ const TenderDetailsCard = ({
             {/* Financial Values Section */}
             <AccordionItem value="values">
               <AccordionTrigger className="text-base font-medium">
-                <Euro className="h-4 w-4 mr-2" />
-                Financial Information
+                <span className="flex items-center">
+                  <Euro className="h-4 w-4 mr-2" />
+                  Financial Information
+                </span>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-4 mt-2">
@@ -163,8 +167,10 @@ const TenderDetailsCard = ({
             {/* Timeline Section */}
             <AccordionItem value="timeline">
               <AccordionTrigger className="text-base font-medium">
-                <Calendar className="h-4 w-4 mr-2" />
-                Timeline & Periods
+                <span className="flex items-center">
+                  <Calendar className="h-4 w-4 mr-2" />
+                  Timeline & Periods
+                </span>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-2">
@@ -225,8 +231,10 @@ const TenderDetailsCard = ({
             {tender.buyer && hasContent(tender.buyer) && (
               <AccordionItem value="organization">
                 <AccordionTrigger className="text-base font-medium">
-                  <Building className="h-4 w-4 mr-2" />
-                  Organization Information
+                  <span className="flex items-center">
+                    <Building className="h-4 w-4 mr-2" />
+                    Organization Information
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-2">
@@ -330,8 +338,10 @@ const TenderDetailsCard = ({
             {tender.place_of_performance && hasContent(tender.place_of_performance) && (
               <AccordionItem value="location">
                 <AccordionTrigger className="text-base font-medium">
-                  <MapPin className="h-4 w-4 mr-2" />
-                  Location Information
+                  <span className="flex items-center">
+                    <MapPin className="h-4 w-4 mr-2" />
+                    Location Information
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-2">
@@ -395,8 +405,10 @@ const TenderDetailsCard = ({
             {(tender.contract_term || tender.submission_term) && (
               <AccordionItem value="contracts">
                 <AccordionTrigger className="text-base font-medium">
-                  <Briefcase className="h-4 w-4 mr-2" />
-                  Contract Terms
+                  <span className="flex items-center">
+                    <Briefcase className="h-4 w-4 mr-2" />
+                    Contract Terms
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-2">
@@ -433,8 +445,10 @@ const TenderDetailsCard = ({
             {tender.purpose && (tender.purpose.main_classifications?.length > 0 || tender.purpose.additional_classifications?.length > 0) && (
               <AccordionItem value="classifications">
                 <AccordionTrigger className="text-base font-medium">
-                  <FileText className="h-4 w-4 mr-2" />
-                  Classifications
+                  <span className="flex items-center">
+                    <FileText className="h-4 w-4 mr-2" />
+                    Classifications
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 mt-2">
@@ -478,8 +492,10 @@ const TenderDetailsCard = ({
             {tender.lots && tender.lots.length > 1 && (
               <AccordionItem value="lots">
                 <AccordionTrigger className="text-base font-medium">
-                  <Package className="h-4 w-4 mr-2" />
-                  Lots ({tender.lots.length})
+                  <span className="flex items-center">
+                    <Package className="h-4 w-4 mr-2" />
+                    Lots ({tender.lots.length})
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-4 mt-2">
@@ -521,8 +537,10 @@ const TenderDetailsCard = ({
             {tender.procurement_documents && tender.procurement_documents.length > 0 && (
               <AccordionItem value="documents">
                 <AccordionTrigger className="text-base font-medium">
-                  <ClipboardList className="h-4 w-4 mr-2" />
-                  Documents ({tender.procurement_documents.length})
+                  <span className="flex items-center">
+                    <ClipboardList className="h-4 w-4 mr-2" />
+                    Documents ({tender.procurement_documents.length})
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="space-y-2 mt-2">
@@ -554,8 +572,10 @@ const TenderDetailsCard = ({
             {tender.additional_information && (
               <AccordionItem value="additional">
                 <AccordionTrigger className="text-base font-medium">
-                  <Info className="h-4 w-4 mr-2" />
-                  Additional Information
+                  <span className="flex items-center">
+                    <Info className="h-4 w-4 mr-2" />
+                    Additional Information
+                  </span>
                 </AccordionTrigger>
                 <AccordionContent>
                   <div className="mt-2 whitespace-pre-wrap">
