@@ -53,7 +53,7 @@ const Header = () => {
               to="/" 
               className="text-2xl font-bold text-gober-primary-900 dark:text-white transition-colors hover:text-gober-accent-500"
             >
-              GoberAI.
+              Gober.
             </Link>
           </div>
           

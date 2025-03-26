@@ -70,7 +70,7 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gober-bg-100 dark:bg-gober-primary-900 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2 text-gober-primary-900 dark:text-white">GoberAI.</h1>
+          <h1 className="text-3xl font-bold mb-2 text-gober-primary-900 dark:text-white">Gober.</h1>
           <p className="text-gray-600 dark:text-gray-400">Sign in to access your account</p>
         </div>
         
