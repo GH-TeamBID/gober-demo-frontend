@@ -248,18 +248,6 @@ const TenderDetailsCard = ({
                       </div>
                     </div>
                     
-                    {/* Legal Identifiers */}
-                    {tender.buyer.legal_identifier && (
-                      <div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Legal Identifier
-                        </div>
-                        <div className="mt-1">
-                          {tender.buyer.legal_identifier.notation || 'Not specified'}
-                        </div>
-                      </div>
-                    )}
-                    
                     {tender.buyer.tax_identifier && (
                       <div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -363,7 +351,7 @@ const TenderDetailsCard = ({
                         Country
                       </div>
                       <div className="mt-1">
-                        {tender.place_of_performance.country_code || 'Not specified'}
+                        {tender.place_of_performance.country_code || 'España'}
                       </div>
                     </div>
                     
@@ -424,18 +412,6 @@ const TenderDetailsCard = ({
                         ) || 'Not specified'}
                       </div>
                     </div>
-                    
-                    {/* Submission Languages */}
-                    {tender.submission_term?.languages && tender.submission_term.languages.length > 0 && (
-                      <div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Submission Languages
-                        </div>
-                        <div className="mt-1">
-                          {tender.submission_term.languages.join(', ')}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </AccordionContent>
               </AccordionItem>
