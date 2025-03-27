@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { SortField, SortState } from '@/types/types';
 import { TenderPreview } from '@/services/tenderService';
 import TenderCard from './TenderCard';
-import { ArrowUp, ArrowDown } from 'lucide-react';
+import { ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
 
 interface TenderResultsProps {
   tenders: TenderPreview[];
@@ -12,6 +12,8 @@ interface TenderResultsProps {
   onToggleSave: (tenderId: string) => void;
   sort: SortState;
   onSort: (sort: SortState) => void;
+  onLoadMore: () => void;
+  hasMore?: boolean;
 }
 const TenderResults = ({
   tenders,
@@ -19,7 +21,9 @@ const TenderResults = ({
   savedTenderIds,
   onToggleSave,
   sort,
-  onSort
+  onSort,
+  onLoadMore,
+  hasMore = false
 }: TenderResultsProps) => {
   // Convert array to Set for O(1) lookups
   const savedIdsSet = new Set(savedTenderIds);
@@ -140,8 +144,21 @@ const TenderResults = ({
       </div>
       
       <div className="flex justify-center mt-8">
-        <Button variant="outline" size="lg">
-          Load More
+        <Button 
+          variant="outline" 
+          size="lg" 
+          onClick={() => {
+            console.log('Load More button clicked in TenderResults');
+            onLoadMore();
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Loading...
+            </>
+          ) : 'Load More'}
         </Button>
       </div>
     </>;

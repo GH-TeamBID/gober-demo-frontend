@@ -143,6 +143,15 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       setPageSize(response.size);
       setHasMore(response.has_next);
       
+      // Notify user if no more results
+      if (!response.has_next && response.items.length === 0) {
+        toast({
+          title: "End of results",
+          description: "There are no more tenders to load.",
+          duration: 3000,
+        });
+      }
+      
       // Update current params
       setCurrentParams(prev => ({
         ...prev,

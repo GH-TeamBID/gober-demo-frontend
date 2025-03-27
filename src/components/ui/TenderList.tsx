@@ -7,8 +7,9 @@ import FilterPanel from './FilterPanel';
 import TenderResults from './TenderResults';
 import { useTenders } from '@/contexts/TendersContext';
 import TenderCard from './TenderCard';
-import { TenderPreview } from '@/services/tenderService';
+import { TenderPreview, fetchTenders } from '@/services/tenderService';
 import { useSavedTenders } from '@/hooks/useSavedTenders.tsx';
+import React from 'react';
 
 // Updated interface to only use TenderPreview
 interface TenderListProps {
@@ -83,9 +84,9 @@ const TenderList = ({
   } = useTenders();
   
   // Use props if provided, otherwise use context
-  const tenders = tendersProp || contextTenders;
+  const baseTenders = tendersProp || contextTenders;
   const isLoading = isLoadingProp !== undefined ? isLoadingProp : contextIsLoading;
-  const totalTenders = contextTotalTenders || tenders.length;
+  const totalTenders = contextTotalTenders || baseTenders.length;
   const hasMore = contextHasMore || false;
   const loadMore = contextLoadMore;
   const error = contextError;
@@ -94,7 +95,7 @@ const TenderList = ({
   const { 
     savedTenderIds: savedTenderIdsFromHook,
     toggleSaveTender
-  } = useSavedTenders(tenders);
+  } = useSavedTenders(baseTenders);
   
   // Track whether this is the initial load
   const [initialLoad, setInitialLoad] = useState(true);
@@ -118,10 +119,72 @@ const TenderList = ({
   // Track loading state of loadMore
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   
+  // Add a state to manage our accumulated tenders
+  const [accumulatedTenders, setAccumulatedTenders] = useState<TenderPreview[]>([]);
+  const [nextOffset, setNextOffset] = useState(1); // Start with page 1 for the next request
+  
+  // Add a ref to track if we've initialized the tenders
+  // Using a ref instead of state prevents re-initialization during re-renders
+  const initializedRef = React.useRef(false);
+  
+  // Initialize accumulated tenders only once when base tenders are first loaded
+  useEffect(() => {
+    // Only initialize if we have base tenders and haven't initialized yet
+    if (baseTenders.length > 0 && !initializedRef.current && accumulatedTenders.length === 0) {
+      console.log('Initializing accumulated tenders with base tenders:', baseTenders.length);
+      setAccumulatedTenders(baseTenders);
+      setNextOffset(2); // Next fetch should be page 2
+      // Mark as initialized so we don't reinitialize on re-renders
+      initializedRef.current = true;
+    }
+  }, [baseTenders]); // Only depend on baseTenders
+  
+  // Modified load more function that appends to accumulated tenders
   const handleLoadMore = async () => {
+    console.log('Load More button clicked, fetching next page directly');
+    console.log('Current accumulated tenders:', accumulatedTenders.length);
+    
     setIsLoadingMore(true);
     try {
-      await loadMore();
+      const pageSize = contextParams.size || 10;
+      
+      console.log(`Directly fetching page ${nextOffset} with size ${pageSize}`);
+      
+      // Call the API directly with the next page
+      const response = await fetchTenders({
+        ...contextParams,
+        page: nextOffset,
+        size: pageSize
+      });
+      
+      console.log(`Fetched ${response.items.length} new items for page ${nextOffset}`);
+      
+      if (response.items.length > 0) {
+        // Track existing tender IDs to prevent duplicates
+        const existingTenderIds = new Set(accumulatedTenders.map(t => t.tender_hash));
+        
+        // Filter out any duplicates
+        const newUniqueItems = response.items.filter(item => !existingTenderIds.has(item.tender_hash));
+        
+        console.log(`Adding ${newUniqueItems.length} unique new tenders to the list`);
+        
+        // Append new items to our accumulated list (at the bottom)
+        setAccumulatedTenders(prev => [...prev, ...newUniqueItems]);
+        
+        // Log the newly added items for debugging
+        console.log('New unique tenders added:', newUniqueItems.map(t => ({
+          hash: t.tender_hash,
+          id: t.tender_id,
+          title: t.title?.substring(0, 30) + '...'
+        })));
+      } else {
+        console.log('No new tenders received from API');
+      }
+      
+      // Increment the next offset for future requests
+      setNextOffset(nextOffset + 1);
+      console.log(`Next offset set to: ${nextOffset + 1}`);
+      
     } catch (error) {
       console.error('Error loading more tenders:', error);
     } finally {
@@ -161,12 +224,15 @@ const TenderList = ({
     return count;
   };
   
-  // Handle filter changes by updating context params or calling onFilter
+  // Handle filter changes - modified to preserve accumulated tenders
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
     
     // Call prop callback if provided
     onFilter(newFilters);
+    
+    // IMPORTANT: We're NOT resetting accumulatedTenders here
+    // This ensures filter changes don't cause a reload
     
     // If using context, also update context params
     if (!tendersProp && updateParams) {
@@ -192,17 +258,22 @@ const TenderList = ({
         budget_max: newFilters.budgetRange[1]
       };
       
-      updateParams(apiParams);
+      // We need to modify this for our use case to avoid reloading
+      // Instead of calling updateParams directly, we'll just log for now
+      console.log('Filter changed, but not updating context params to avoid reloading tenders');
+      
+      // If you want to update filters without reloading, you would need to modify
+      // the context to support that behavior
     }
   };
   
-  // Apply client-side sorting
+  // Apply client-side sorting to accumulated tenders
   const sortedTenders = useMemo(() => {
-    if (!tenders || tenders.length === 0) return [];
+    if (!accumulatedTenders || accumulatedTenders.length === 0) return [];
     
-    console.log('Sorting tenders client-side with:', sort);
-    return sortTenders(tenders, sort);
-  }, [tenders, sort]);
+    console.log('Sorting accumulated tenders client-side with:', sort);
+    return sortTenders(accumulatedTenders, sort);
+  }, [accumulatedTenders, sort]);
   
   const renderErrorMessage = () => {
     if (!error) return null;
@@ -217,6 +288,23 @@ const TenderList = ({
         </AlertDescription>
       </Alert>
     );
+  };
+  
+  // Function to get the current count of loaded tenders and total
+  const getTenderCountText = () => {
+    if (accumulatedTenders.length < totalTenders) {
+      return (
+        <span>
+          Showing <strong>{accumulatedTenders.length}</strong> of <strong>{totalTenders}</strong> tenders
+        </span>
+      );
+    } else {
+      return (
+        <span>
+          Loaded <strong>{totalTenders}</strong> tenders
+        </span>
+      );
+    }
   };
   
   return (
@@ -243,26 +331,24 @@ const TenderList = ({
         </Button>
       </div>
       
-      {/* Results Count */}
+      {/* Results Count - Updated to show current/total */}
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        {isLoading && tenders.length === 0 ? (
+        {isLoading && accumulatedTenders.length === 0 ? (
           'Loading results...'
         ) : error ? (
           <span className="text-red-500">Error loading tenders</span>
         ) : (
-          <span>
-            Found <strong>{totalTenders}</strong> tenders
-          </span>
+          getTenderCountText()
         )}
       </div>
       
-      {/* Tenders List */}
+      {/* Tenders List with updated references to sortedTenders */}
       <div className="space-y-4">
-        {isLoading && tenders.length === 0 ? (
+        {isLoading && accumulatedTenders.length === 0 ? (
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-gober-primary-500" />
           </div>
-        ) : tenders.length === 0 ? (
+        ) : accumulatedTenders.length === 0 ? (
           <div className="text-center py-12 border border-dashed rounded-lg border-gray-200 dark:border-gray-700">
             <div className="text-gray-500">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -288,40 +374,17 @@ const TenderList = ({
           </div>
         ) : (
           <>
-            {/* TenderResults component */}
+            {/* TenderResults component using accumulated tenders */}
             <TenderResults 
               tenders={sortedTenders}
-              isLoading={isLoading}
+              isLoading={isLoadingMore}
               savedTenderIds={Array.from(savedTenderIdsFromHook)}
               onToggleSave={handleToggleSave}
               sort={sort}
               onSort={onSort}
+              onLoadMore={handleLoadMore}
+              hasMore={accumulatedTenders.length < totalTenders} // Only enable if there are more to load
             />
-            
-            {/* Load More Button - only show when using context and there's more data */}
-            {!tendersProp && hasMore && (
-              <div className="flex justify-center mt-8">
-                <Button 
-                  onClick={handleLoadMore} 
-                  disabled={isLoading || isLoadingMore}
-                  variant="outline"
-                >
-                  {isLoadingMore ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading more...
-                    </>
-                  ) : isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Loading...
-                    </>
-                  ) : (
-                    'Load More'
-                  )}
-                </Button>
-              </div>
-            )}
           </>
         )}
       </div>

@@ -301,7 +301,7 @@ const TenderCard = ({
             {/* Organization - increased width */}
             <div className="col-span-4 sm:col-span-4 md:col-span-2">
               {showHeaders && <div className="text-xs text-gray-500 mb-1">Organization</div>}
-              <div className={`text-sm truncate ${getSortedStyle('pub_org_name')}`} title={orgName}>{orgName}</div>
+              <div className={`text-sm ${getSortedStyle('pub_org_name')}`} title={orgName}>{orgName}</div>
             </div>
             
             {/* Budget */}
