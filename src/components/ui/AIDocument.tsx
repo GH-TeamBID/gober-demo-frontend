@@ -1,11 +1,10 @@
-
 import { useState, useRef } from 'react';
 import { FileDown, Save, Edit, Check, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-import { Popover, PopoverTrigger, PopoverContent } from '@/components/ui/popover';
+import ReactMarkdown from 'react-markdown';
 
 // Interface for reference data
 interface Reference {
@@ -84,22 +83,20 @@ const AIDocument = ({
     setIsEditing(!isEditing);
   };
 
-  // Process document text to render references
-  const renderDocumentWithReferences = () => {
-    if (!document) return 'No AI document available for this tender.';
-
-    // Use regex to find reference patterns like [1], [2], etc.
-    return document.split(/(\[\d+\])/).map((part, index) => {
-      // Check if the part matches the reference pattern
-      const refMatch = part.match(/\[(\d+)\]/);
+  // Custom components for ReactMarkdown
+  const markdownComponents = {
+    // Custom link component to handle reference links
+    a: ({ node, href, children, ...props }: any) => {
+      // Check if this is a reference-style link like [1]
+      const refMatch = String(children).match(/^\[(\d+)\]$/);
       
-      if (refMatch) {
+      if (refMatch && refMatch[1]) {
         const refNumber = refMatch[1];
         const reference = exampleReferences[refNumber];
         
         if (reference) {
           return (
-            <TooltipProvider key={index}>
+            <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <a 
@@ -107,8 +104,9 @@ const AIDocument = ({
                     target="_blank" 
                     rel="noopener noreferrer" 
                     className="inline-flex items-center gap-0.5 text-gober-accent-500 hover:text-gober-accent-600 font-medium"
+                    {...props}
                   >
-                    {part}
+                    {children}
                     <ExternalLink className="h-3 w-3" />
                   </a>
                 </TooltipTrigger>
@@ -122,7 +120,33 @@ const AIDocument = ({
         }
       }
       
-      return part;
+      // Regular links
+      return (
+        <a 
+          href={href} 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="text-gober-accent-500 hover:text-gober-accent-600"
+          {...props}
+        >
+          {children}
+        </a>
+      );
+    }
+  };
+
+  // Process document text to make reference patterns into links
+  const processDocumentWithReferences = (text: string) => {
+    if (!text) return 'No AI document available for this tender.';
+
+    // Convert [1], [2], etc. into Markdown links
+    return text.replace(/\[(\d+)\]/g, (match, refNumber) => {
+      const reference = exampleReferences[refNumber];
+      if (reference) {
+        // Create a markdown link with just the reference number
+        return `[${match}](${reference.link})`;
+      }
+      return match;
     });
   };
 
@@ -159,7 +183,12 @@ const AIDocument = ({
           />
         ) : (
           <div className="min-h-[400px] border rounded-md p-4 font-mono text-sm overflow-auto whitespace-pre-wrap bg-gray-50 dark:bg-gray-900/30">
-            {renderDocumentWithReferences()}
+            <ReactMarkdown
+              components={markdownComponents}
+              urlTransform={(url) => url} // Default URL transform for safety
+            >
+              {processDocumentWithReferences(document)}
+            </ReactMarkdown>
           </div>
         )}
       </CardContent>

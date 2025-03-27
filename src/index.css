@@ -159,4 +159,13 @@
   .page-transition-exit-active {
     @apply transform -translate-x-full transition-transform duration-300 ease-in;
   }
+
+  .markdown > * {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-weight: 100 900;
+    font-display: swap;
+    font-style: normal;
+    src: url("https://rsms.me/inter/font-files/Inter-roman.var.woff2?v=3.19") format("woff2");
+    all: revert;
+  }
 }
