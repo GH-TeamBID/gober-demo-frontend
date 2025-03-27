@@ -571,7 +571,7 @@ const TenderDetailsCard = ({
               </div>
               <div className="mt-2">
                 <a 
-                  href={tender.aiDocument} 
+                  href={tender.aiDocument} // Actualmente añade todo el texto
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline inline-flex items-center"

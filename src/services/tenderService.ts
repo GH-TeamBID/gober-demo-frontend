@@ -225,40 +225,47 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
   try {
     console.log('Fetching tenders with params:', params);
     
-    // Create a copy of params without sort fields since backend doesn't support them yet
-    const apiParams = { ...params };
+    // Create a clean object with only defined parameters
+    const apiParams: Record<string, any> = {};
     
-    // Note: We're intentionally not sending sort parameters to the API
-    // because the current backend doesn't support them (as shown in your backend code).
-    // The sorting will happen client-side instead.
-    if (apiParams.sort_field) {
-      console.log(`Note: Backend doesn't support sorting yet. Will sort client-side by ${apiParams.sort_field} ${apiParams.sort_direction}`);
-      // Remove sort params from API call
-      delete apiParams.sort_field;
-      delete apiParams.sort_direction;
-    }
+    // Only add parameters that are defined
+    Object.entries(params).forEach(([key, value]) => {
+      // Skip undefined, null, empty arrays, and empty strings
+      if (value === undefined || value === null) return;
+      if (Array.isArray(value) && value.length === 0) return;
+      if (value === '') return;
+      
+      // For arrays, we need to convert them to the format expected by the API
+      if (Array.isArray(value)) {
+        // Many APIs expect repeated parameters like ?category=A&category=B
+        // If your API expects comma-separated values like ?category=A,B
+        // then uncomment the following line instead:
+        // apiParams[key] = value.join(',');
+        
+        // For repeated parameters (most common)
+        apiParams[key] = value;
+      } else {
+        apiParams[key] = value;
+      }
+    });
     
     // Add debugging to see exactly what's being sent to the API
-    console.log('API params being sent:', apiParams);
+    console.log('Clean API params being sent:', apiParams);
     
     try {
-      // Try to fetch from the real API with apiParams
+      // Send the clean params to the API
       const response = await apiClient.get<PaginatedTenderResponse>('/tenders', { params: apiParams });
       
-      // Simple log to see we got data
       console.log(`Fetched ${response.data.items.length} tenders from API`);
       
-      // Return the data directly from the API
       return response.data;
     } catch (apiError) {
-      console.error('Error calling real API:', apiError);
-      throw apiError; // Re-throw to be handled by caller
+      console.error('Error calling API:', apiError);
+      throw apiError;
     }
   } catch (error: any) {
-    // Log the error for debugging
     console.error('Error fetching tenders:', error);
     
-    // Rethrow with a more user-friendly message
     throw new Error(
       error.response?.data?.detail || 
       'Failed to load tenders. Please try again later.'

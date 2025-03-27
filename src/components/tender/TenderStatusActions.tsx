@@ -1,6 +1,6 @@
 import { Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { documentService } from '@/services/documentService';
+import { toggleSaveTender } from '@/services/documentService';
 import { useState } from 'react';
 
 interface TenderStatusActionsProps {
@@ -26,7 +26,7 @@ const TenderStatusActions = ({
       setIsLoading(true);
       
       // Call our service method - we only care about it completing successfully
-      await documentService.toggleSaveTender(tenderId, isSaved);
+      await toggleSaveTender(tenderId, isSaved);
       
       // Toggle the state locally after successful server response
       const newSavedState = !isSaved;

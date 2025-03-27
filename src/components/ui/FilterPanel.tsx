@@ -40,6 +40,7 @@ interface FilterPanelProps {
   onClose: () => void;
   filters: FilterState;
   onApplyFilters: (filters: FilterState) => void;
+  onReset?: () => void;
 }
 
 const FilterPanel = ({
@@ -47,6 +48,7 @@ const FilterPanel = ({
   onClose,
   filters,
   onApplyFilters,
+  onReset,
 }: FilterPanelProps) => {
   const [localFilters, setLocalFilters] = useState<FilterState>(filters);
   
@@ -204,19 +206,17 @@ const FilterPanel = ({
   };
   
   const handleReset = () => {
-    const resetFilters: FilterState = {
-      budgetRange: [0, 20000000],
-      categories: [],
-      states: [],
-      dateRange: {
-        from: null,
-        to: null,
-      },
-      status: [],
-    };
-    
-    setLocalFilters(resetFilters);
-    onApplyFilters(resetFilters);
+    if (onReset) {
+      onReset();
+    } else {
+      setLocalFilters({
+        categories: [],
+        states: [],
+        status: [],
+        dateRange: { from: null, to: null },
+        budgetRange: [0, 10000000] as [number, number],
+      });
+    }
   };
   
   return (

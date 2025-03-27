@@ -193,7 +193,10 @@ export function TendersProvider({ children }: { children: ReactNode }) {
     
     setCurrentParams(updatedParams);
     
-    // Load tenders with new params
+    // Log the updated parameters for debugging
+    console.log('Updating API query parameters:', updatedParams);
+    
+    // Load tenders with new params - this will query the backend
     loadTenders(updatedParams);
   };
   
@@ -204,6 +207,7 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       size: 10
     };
     
+    console.log('Resetting all filters to defaults');
     setCurrentParams(defaultParams);
     loadTenders(defaultParams);
   };
@@ -371,7 +375,12 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       }
       
       if (tenderDetail.aiDocument) {
-        console.log(`AI document URL available: ${tenderDetail.aiDocument}`);
+        if (typeof tenderDetail.aiDocument === 'string' && 
+            (tenderDetail.aiDocument.startsWith('http') || tenderDetail.aiDocument.includes('/'))) {
+          console.log(`AI document URL available: ${tenderDetail.aiDocument}`);
+        } else {
+          console.log(`AI document content available (${tenderDetail.aiDocument.length} chars)`);
+        }
       } else {
         console.log(`No AI document available for tender ${tenderId}`);
       }

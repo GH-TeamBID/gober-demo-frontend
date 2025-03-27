@@ -7,7 +7,7 @@ import FilterPanel from './FilterPanel';
 import TenderResults from './TenderResults';
 import { useTenders } from '@/contexts/TendersContext';
 import TenderCard from './TenderCard';
-import { TenderPreview, fetchTenders } from '@/services/tenderService';
+import { TenderPreview, fetchTenders, TenderParams } from '@/services/tenderService';
 import { useSavedTenders } from '@/hooks/useSavedTenders.tsx';
 import React from 'react';
 
@@ -107,13 +107,13 @@ const TenderList = ({
 
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   
-  // Use provided filters or initialize default
+  // Use provided filters or initialize default with more explicit defaults
   const [filters, setFilters] = useState<FilterState>(filtersProp || {
     categories: [],
     states: [],
     status: [],
     dateRange: { from: null, to: null },
-    budgetRange: [0, 10000000],
+    budgetRange: [0, 10000000] as [number, number],
   });
   
   // Track loading state of loadMore
@@ -224,46 +224,48 @@ const TenderList = ({
     return count;
   };
   
-  // Handle filter changes - modified to preserve accumulated tenders
+  // Handle filter changes - modified to use the API
   const handleFilterChange = (newFilters: FilterState) => {
     setFilters(newFilters);
     
     // Call prop callback if provided
     onFilter(newFilters);
     
-    // IMPORTANT: We're NOT resetting accumulatedTenders here
-    // This ensures filter changes don't cause a reload
-    
-    // If using context, also update context params
+    // If using context, update context params to trigger API call
     if (!tendersProp && updateParams) {
-      // Map the filters to the API params format
-      const apiParams = {
-        ...contextParams,
-        // Add filter mappings here with proper type conversions
-        categories: newFilters.categories,
-        states: newFilters.states,
-        status: newFilters.status,
-        // Convert Date objects to ISO strings or null for API
+      // Map the local FilterState to the API's TenderParams format
+      const apiParams: Partial<TenderParams> = {
+        // Only include parameters that have values
+        categories: newFilters.categories.length > 0 ? newFilters.categories : undefined,
+        states: newFilters.states.length > 0 ? newFilters.states : undefined,
+        status: newFilters.status.length > 0 ? newFilters.status : undefined,
+        
+        // Convert Date objects to ISO strings for API
         date_from: newFilters.dateRange.from ? 
           (typeof newFilters.dateRange.from === 'string' ? 
             newFilters.dateRange.from : 
             new Date(newFilters.dateRange.from).toISOString()) 
-          : null,
+          : undefined,
+        
         date_to: newFilters.dateRange.to ? 
           (typeof newFilters.dateRange.to === 'string' ? 
             newFilters.dateRange.to : 
             new Date(newFilters.dateRange.to).toISOString()) 
-          : null,
-        budget_min: newFilters.budgetRange[0],
-        budget_max: newFilters.budgetRange[1]
+          : undefined,
+        
+        // Only include budget range if it differs from defaults
+        budget_min: newFilters.budgetRange[0] > 0 ? newFilters.budgetRange[0] : undefined,
+        budget_max: newFilters.budgetRange[1] < 10000000 ? newFilters.budgetRange[1] : undefined,
       };
       
-      // We need to modify this for our use case to avoid reloading
-      // Instead of calling updateParams directly, we'll just log for now
-      console.log('Filter changed, but not updating context params to avoid reloading tenders');
+      console.log('Sending filter parameters to API:', apiParams);
       
-      // If you want to update filters without reloading, you would need to modify
-      // the context to support that behavior
+      // This will trigger a new API request with these parameters
+      updateParams(apiParams);
+      
+      // Reset accumulated tenders when filters change
+      setAccumulatedTenders([]);
+      initializedRef.current = false;
     }
   };
   
@@ -274,6 +276,26 @@ const TenderList = ({
     console.log('Sorting accumulated tenders client-side with:', sort);
     return sortTenders(accumulatedTenders, sort);
   }, [accumulatedTenders, sort]);
+  
+  // Add a function to completely reset filters
+  const handleResetFilters = () => {
+    const defaultFilters: FilterState = {
+      categories: [],
+      states: [],
+      status: [],
+      dateRange: { from: null, to: null },
+      budgetRange: [0, 10000000] as [number, number],
+    };
+    
+    // Update local state
+    setFilters(defaultFilters);
+    
+    // Call handler with default filters
+    handleFilterChange(defaultFilters);
+    
+    // Close filter panel
+    setIsFilterOpen(false);
+  };
   
   const renderErrorMessage = () => {
     if (!error) return null;
@@ -358,13 +380,7 @@ const TenderList = ({
               <p className="mt-1 text-sm">No tenders match your current criteria.</p>
               {getActiveFilterCount() > 0 && (
                 <button 
-                  onClick={() => handleFilterChange({
-                    categories: [],
-                    states: [],
-                    status: [],
-                    dateRange: { from: null, to: null },
-                    budgetRange: [0, 10000000],
-                  })}
+                  onClick={handleResetFilters}
                   className="mt-3 text-sm text-gober-accent-500 hover:text-gober-accent-600"
                 >
                   Clear all filters
