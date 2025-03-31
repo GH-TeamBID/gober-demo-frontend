@@ -4,19 +4,19 @@ import { toggleSaveTender } from '@/services/documentService';
 import { useState } from 'react';
 
 interface TenderStatusActionsProps {
-  status: string;
   tenderId: string;
   isSaved: boolean;
   onToggleSave?: (id: string) => void;
   getStatusClass: (status: string) => string;
+  status?: string;
 }
 
 const TenderStatusActions = ({ 
-  status, 
   tenderId, 
   isSaved: initialSaved, 
   onToggleSave,
-  getStatusClass 
+  getStatusClass,
+  status = '' 
 }: TenderStatusActionsProps) => {
   const [isSaved, setIsSaved] = useState(initialSaved);
   const [isLoading, setIsLoading] = useState(false);
