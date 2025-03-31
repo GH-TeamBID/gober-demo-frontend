@@ -120,6 +120,7 @@ const TenderDetailTabs = ({
           isTenderSaved={isTenderSaved}
           toggleSaveTender={toggleSaveTender}
           getStatusClass={getStatusClass}
+          documents={tender.procurement_documents}
         />
       </TabsContent>
       

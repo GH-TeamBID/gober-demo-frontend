@@ -1,10 +1,11 @@
 import { apiClient } from "@/lib/auth";
 
 interface Document {
-  id: string;
-  name: string;
+  document_id: string;
+  title: string;
+  url: string;
+  document_type: string;
   content?: string;
-  url?: string;
 }
 
 interface TenderSummaryRequest {
@@ -12,6 +13,7 @@ interface TenderSummaryRequest {
   output_id: string;
   regenerate?: boolean;
   questions?: string[];
+  tender_hash?: string;
 }
 
 interface TenderSummaryResponse {
@@ -26,29 +28,41 @@ interface TenderSummaryResponse {
  * @param output_id - Identifier for the output
  * @param regenerate - Whether to regenerate an existing summary
  * @param questions - Optional questions to focus the summary
+ * @param tender_hash - The tender hash ID
  * @returns Promise with the task information
  */
 export async function generateTenderSummary(
   documents: Document[],
   output_id: string,
   regenerate: boolean = false,
-  questions: string[] = []
+  questions: string[] = [],
+  tender_hash: string = ""
 ): Promise<TenderSummaryResponse> {
   try {
-    console.log(`Generating tender summary for output_id: ${output_id}`);
+    console.log(`[AI-DEBUG] Generating tender summary for output_id: ${output_id}, tender_hash: ${tender_hash}`);
+    console.log(`[AI-DEBUG] Documents count: ${documents.length}`);
+    
+    // Log the first document for debugging
+    if (documents.length > 0) {
+      console.log(`[AI-DEBUG] First document sample: ${JSON.stringify(documents[0])}`);
+    }
+    
     const response = await apiClient.post<TenderSummaryResponse>(
-      '/ai-tools/ai_documents/${tender_hash}',
+      '/ai-tools/tender-summary',
       {
         documents,
         output_id,
         regenerate,
-        questions
+        questions,
+        tender_hash
       } as TenderSummaryRequest
     );
     
+    console.log(`[AI-DEBUG] Summary request successful, task_id: ${response.data.task_id}`);
     return response.data;
   } catch (error: any) {
-    console.error('Error generating tender summary:', error);
+    console.error('[AI-DEBUG] Error generating tender summary:', error);
+    console.error('[AI-DEBUG] Error details:', error.response?.data);
     throw new Error(
       error.response?.data?.detail || 
       'Failed to generate tender summary. Please try again later.'
@@ -65,7 +79,7 @@ export async function generateTenderSummary(
 export async function checkTenderSummaryStatus(taskId: string): Promise<any> {
   try {
     console.log(`Checking status for task: ${taskId}`);
-    const response = await apiClient.get(`/ai-tools/task-status/${taskId}`);
+    const response = await apiClient.get(`/ai-tools/tender-summary/${taskId}`);
     return response.data;
   } catch (error: any) {
     console.error(`Error checking task status for ${taskId}:`, error);

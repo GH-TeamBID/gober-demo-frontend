@@ -11,13 +11,15 @@ interface TenderDetailsCardProps {
   isTenderSaved: (id: string) => boolean;
   toggleSaveTender: (id: string) => void;
   getStatusClass: (status: string) => string;
+  documents?: any[];
 }
 
 const TenderDetailsCard = ({ 
   tender, 
   isTenderSaved, 
   toggleSaveTender,
-  getStatusClass 
+  getStatusClass,
+  documents
 }: TenderDetailsCardProps) => {
   const formatCurrency = (value?: { amount?: number; currency?: string }) => {
     if (!value || !value.amount) return 'Not specified';
@@ -71,6 +73,7 @@ const TenderDetailsCard = ({
             isSaved={isTenderSaved(tender.tender_hash || tender.id)}
             onToggleSave={toggleSaveTender}
             getStatusClass={getStatusClass}
+            documents={documents}
           />
         </div>
         

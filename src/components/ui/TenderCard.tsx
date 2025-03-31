@@ -351,10 +351,11 @@ const TenderCard = ({
             </div>
             
             <TenderStatusActions 
-              tenderId={tenderId} 
+              tenderId={tenderHash} 
               isSaved={isSaved} 
               onToggleSave={handleSaveToggle} 
-              getStatusClass={getSortedStyle} 
+              getStatusClass={getSortedStyle}
+              status="Open"
             />
           
             {/* Mobile expandable section for additional information */}
