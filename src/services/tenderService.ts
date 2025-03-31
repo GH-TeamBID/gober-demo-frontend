@@ -390,7 +390,6 @@ function mapContractType(typeCode?: string): string {
  */
 export async function fetchTenderPreviewById(tenderId: string): Promise<TenderPreview> {
   try {
-    // The actual endpoint is /preview/{tender_id}, not /tenders/preview
     const response = await apiClient.get(`/tenders/preview/${tenderId}`);
     
     // Add isLoading=false to mark it as loaded

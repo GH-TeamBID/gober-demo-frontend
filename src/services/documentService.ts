@@ -37,7 +37,7 @@ export async function generateTenderSummary(
   try {
     console.log(`Generating tender summary for output_id: ${output_id}`);
     const response = await apiClient.post<TenderSummaryResponse>(
-      '/ai-tools/tender-summary',
+      '/ai-tools/ai_documents/${tender_hash}',
       {
         documents,
         output_id,

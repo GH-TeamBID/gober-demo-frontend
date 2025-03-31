@@ -221,10 +221,10 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       // Fetch all saved tenders (backend returns UserTender[] with tender_uri)
       const userTenders: UserTender[] = await fetchSavedTenders();
       
-      // Extract tender_uri values to a Set for O(1) lookups
+      // Extract tender_hash values to a Set for O(1) lookups
       const savedIds = userTenders
-        .map(ut => ut.tender_uri)
-        .filter((uri): uri is string => typeof uri === 'string');
+        .map(ut => ut.id) // Changed from tender_uri to id (hash)
+        .filter((hash): hash is string => typeof hash === 'string');
       
       // Update saved IDs set
       setSavedTenderIds(new Set(savedIds));
@@ -239,13 +239,13 @@ export function TendersProvider({ children }: { children: ReactNode }) {
         console.log(`Fetching details for ${tendersToFetch.length} saved tenders`);
         
         // Fetch details for each tender
-        const fetchPromises = tendersToFetch.map(async (uri) => {
+        const fetchPromises = tendersToFetch.map(async (hash) => { // Changed from uri to hash
           try {
-            const tenderPreview = await fetchTenderPreviewById(uri);
-            return { id: uri, details: tenderPreview, success: true };
+            const tenderPreview = await fetchTenderPreviewById(hash); // Changed from uri to hash
+            return { id: hash, details: tenderPreview, success: true }; // Changed from uri to hash
           } catch (err) {
-            console.error(`Failed to fetch preview for tender ${uri}:`, err);
-            return { id: uri, details: null, success: false };
+            console.error(`Failed to fetch preview for tender ${hash}:`, err); // Changed from uri to hash
+            return { id: hash, details: null, success: false }; // Changed from uri to hash
           }
         });
         
