@@ -100,17 +100,21 @@ export async function checkTenderSummaryStatus(taskId: string): Promise<any> {
 export async function toggleSaveTender(tenderId: string, isSaved: boolean): Promise<boolean> {
   try {
     const action = isSaved ? 'unsave' : 'save';
-    console.log(`[${new Date().toISOString()}] ${action} tender: ${tenderId}`);
+    console.log(`[${new Date().toISOString()}] Attempting to ${action} tender: ${tenderId}`);
     
     if (isSaved) {
+      console.log(`[${new Date().toISOString()}] Sending request to unsave tender: ${tenderId}`);
       await apiClient.delete(`/tenders/unsave`, {
         data: { tender_uri: tenderId }
       });
+      console.log(`[${new Date().toISOString()}] Successfully unsaved tender: ${tenderId}`);
     } else {
+      console.log(`[${new Date().toISOString()}] Sending request to save tender: ${tenderId}`);
       await apiClient.post(`/tenders/save`, {
         tender_uri: tenderId,
         situation: 'saved'
       });
+      console.log(`[${new Date().toISOString()}] Successfully saved tender: ${tenderId}`);
     }
     
     console.log(`Tender ${tenderId} has been ${action}d successfully.`);

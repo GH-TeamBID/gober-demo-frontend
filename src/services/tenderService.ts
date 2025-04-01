@@ -318,31 +318,35 @@ export async function fetchTenderDetail(tenderId: string): Promise<TenderDetail>
     
     // Try to fetch the AI summary data in parallel
     try {
-      const summaryData = await fetchTenderSummary(tenderId);
+      console.log(`[AI-DEBUG] Fetching AI summary data for tender ID: ${tenderId}, URI: ${enrichedDetail.uri}`);
+      const summaryData = await fetchTenderSummary(tenderId, enrichedDetail.uri);
       
-      // If we got summary data, check each field individually
+      console.log(`[AI-DEBUG] Tender detail URI: ${enrichedDetail.uri}, Tender ID: ${tenderId}`);
+      
       if (summaryData) {
-        // Check if summary text exists and is not empty
-        if (summaryData.summary && summaryData.summary.trim() !== '') {
-          enrichedDetail.aiSummary = summaryData.summary;
-          console.log(`AI summary found for tender ${tenderId} (${summaryData.summary.length} chars)`);
-        } else {
-          console.log(`No AI summary text available for tender ${tenderId}`);
-        }
+        const { tender_uri, summary, url_document } = summaryData;
+        const isUriMatch = tender_uri.split('/').pop() == (enrichedDetail.uri.split('/').pop());
         
-        // Check if document URL exists and is not empty
-        if (summaryData.url_document && summaryData.url_document.trim() !== '') {
-          enrichedDetail.aiDocument = summaryData.url_document;
-          console.log(`AI document URL found for tender ${tenderId}: ${summaryData.url_document}`);
-        } else {
-          console.log(`No AI document URL available for tender ${tenderId}`);
+        if (isUriMatch) {
+          if (summary?.trim()) {
+            enrichedDetail.aiSummary = summary;
+            console.log(`[AI-DEBUG] AI summary found for tender ${tenderId} (${summary.length} chars)`);
+          } else {
+            console.log(`[AI-DEBUG] No AI summary text available for tender ${tenderId}`);
+          }
+          
+          if (url_document?.trim()) {
+            enrichedDetail.aiDocument = url_document;
+            console.log(`[AI-DEBUG] AI document URL found for tender ${tenderId}: ${url_document}`);
+          } else {
+            console.log(`[AI-DEBUG] No AI document URL available for tender ${tenderId}`);
+          }
         }
       } else {
-        console.log(`No AI content found for tender ${tenderId}`);
+        console.log(`[AI-DEBUG] No AI content found for tender ${tenderId}`);
       }
     } catch (summaryError) {
-      // Log but don't fail the entire request if AI content can't be fetched
-      console.warn(`Could not fetch AI content for tender ${tenderId}:`, summaryError);
+      console.warn(`[AI-DEBUG] Could not fetch AI content for tender ${tenderId}:`, summaryError);
     }
     
     return enrichedDetail;
@@ -483,22 +487,66 @@ export async function unsaveTender(tenderUri: string): Promise<boolean> {
  * Fetches AI-generated summary and document URL for a tender
  * 
  * @param tenderId - The unique identifier for the tender
+ * @param tenderUri - Optional tender URI to use for lookup
  * @returns Promise with the tender summary data
  */
-export async function fetchTenderSummary(tenderId: string): Promise<TenderSummary | null> {
+export async function fetchTenderSummary(tenderId: string, tenderUri?: string): Promise<TenderSummary | null> {
   try {
-    console.log(`Fetching AI summary for tender ${tenderId}`);
-    const response = await apiClient.get<TenderSummary>(`/tenders/summary/${tenderId}`);
+    console.log(`[AI-DEBUG] Fetching AI summary for tender ${tenderId}${tenderUri ? `, URI: ${tenderUri}` : ''}`);
+    
+    // If we have a URI parameter, include it in the request
+    let url = `/tenders/summary/${tenderId}`;
+    //if (tenderUri) {
+    //  url += `?uri=${encodeURIComponent(tenderUri)}`;
+    //}
+    
+    const response = await apiClient.get<TenderSummary>(url);
+    
+    if (response.data) {
+      console.log(`[AI-DEBUG] AI summary found for tender ${tenderId}:`, {
+        tender_uri: response.data.tender_uri,
+        summary_length: response.data.summary?.length || 0,
+        summary: response.data.summary,
+        has_document: !!response.data.url_document
+      });
+    }
+    
     return response.data;
   } catch (error: any) {
     // If 404, the summary doesn't exist yet, which is a valid state
     if (error.response?.status === 404) {
-      console.log(`No AI summary found for tender ${tenderId}`);
+      console.log(`[AI-DEBUG] No AI summary found for tender ${tenderId}`);
       return null;
     }
     
-    console.error(`Error fetching tender summary for ${tenderId}:`, error);
+    console.error(`[AI-DEBUG] Error fetching tender summary for ${tenderId}:`, error);
     // Don't throw - we want to be able to load tender details even if AI content fails
     return null;
+  }
+}
+
+/**
+ * Requests an AI-generated summary for a tender
+ * 
+ * @param tenderId - The unique identifier for the tender
+ * @param tenderUri - The URI of the tender for database matching
+ * @returns Promise with the task information
+ */
+export async function requestTenderSummary(tenderId: string, tenderUri: string): Promise<any> {
+  try {
+    console.log(`[AI-DEBUG] Requesting AI summary generation for tender ${tenderId}, URI: ${tenderUri}`);
+    
+    const response = await apiClient.post(`/tenders/request-summary/${tenderId}`, {
+      tender_uri: tenderUri
+    });
+    
+    console.log(`[AI-DEBUG] Successfully requested AI summary for tender ${tenderId}`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`[AI-DEBUG] Error requesting AI summary for tender ${tenderId}:`, error);
+    throw new Error(
+      error.response?.data?.detail || 
+      'Failed to request AI summary. Please try again later.'
+    );
   }
 }

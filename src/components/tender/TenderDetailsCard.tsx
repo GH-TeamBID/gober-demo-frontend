@@ -69,8 +69,8 @@ const TenderDetailsCard = ({
           
           <TenderStatusActions 
             status={tender.status}
-            tenderId={tender.tender_hash || tender.id}
-            isSaved={isTenderSaved(tender.tender_hash || tender.id)}
+            tenderId={tender.uri.split('/').pop()}
+            isSaved={isTenderSaved(tender.uri.split('/').pop())}
             onToggleSave={toggleSaveTender}
             getStatusClass={getStatusClass}
             documents={documents}
