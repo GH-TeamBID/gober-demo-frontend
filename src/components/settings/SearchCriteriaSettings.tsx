@@ -11,6 +11,7 @@ import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/lib/auth";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "@/components/ui/use-toast";
+import { useTranslation } from 'react-i18next';
 
 const contractTypes = [
   { type_code: "1", es_description: "Suministros", description: "Goods" },
@@ -93,6 +94,8 @@ interface UserCriteriaCreate {
 }
 
 const SearchCriteriaSettings = () => {
+  const { t } = useTranslation('settings');
+  const { t: tUI } = useTranslation('ui');
   const { user } = useAuth();
   const [selectedKeywords, setSelectedKeywords] = useState<string[]>([]);
   const [selectedCPV, setSelectedCPV] = useState<CPVCode[]>([]);
@@ -124,8 +127,9 @@ const SearchCriteriaSettings = () => {
       if (!user || !user.id) {
         setIsLoading(false);
         setLoadError(useSpanish 
-          ? 'No se pudo determinar la identidad del usuario. Por favor, inicie sesión de nuevo.' 
-          : 'Could not determine user identity. Please log in again.');
+          ? t('components.searchCriteria.errors.userIdentity')
+          : t('components.searchCriteria.errors.userIdentity')
+        );
         return;
       }
       
@@ -210,8 +214,9 @@ const SearchCriteriaSettings = () => {
           setLoadError(null);
         } else {
           setLoadError(useSpanish 
-            ? 'Error al cargar los criterios de búsqueda. Inténtelo de nuevo más tarde.' 
-            : 'Error loading search criteria. Please try again later.');
+            ? t('components.searchCriteria.errors.loadingCriteria')
+            : t('components.searchCriteria.errors.loadingCriteria')
+          );
         }
       } finally {
         setIsLoading(false);
@@ -219,7 +224,7 @@ const SearchCriteriaSettings = () => {
     };
     
     loadUserCriteria();
-  }, [user, useSpanish]);
+  }, [user, useSpanish, t]);
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -351,10 +356,10 @@ const SearchCriteriaSettings = () => {
   const handleSaveCriteria = async () => {
     if (!user || !user.id) {
       toast({
-        title: useSpanish ? "Error" : "Error",
+        title: useSpanish ? t('components.common.error') : t('components.common.error'),
         description: useSpanish 
-          ? "No se pudo determinar la identidad del usuario. Por favor, inicie sesión de nuevo." 
-          : "Could not determine user identity. Please log in again.",
+          ? t('components.searchCriteria.errors.userIdentity')
+          : t('components.searchCriteria.errors.userIdentity'),
         variant: "destructive"
       });
       return;
@@ -363,7 +368,6 @@ const SearchCriteriaSettings = () => {
     setIsSaving(true);
     
     try {
-
       const payload: UserCriteriaCreate = {
         min_budget: budgetRange[0],
         max_budget: budgetRange[1],
@@ -377,20 +381,20 @@ const SearchCriteriaSettings = () => {
       setHasCriteria(true);
       
       toast({
-        title: useSpanish ? "Criterios guardados" : "Criteria saved",
+        title: useSpanish ? t('components.searchCriteria.success.title') : t('components.searchCriteria.success.title'),
         description: useSpanish 
-          ? "Sus criterios de búsqueda han sido guardados correctamente." 
-          : "Your search criteria have been saved successfully.",
+          ? t('components.searchCriteria.success.message')
+          : t('components.searchCriteria.success.message'),
         variant: "default"
       });
     } catch (error: any) {
       console.error('Error saving criteria:', error);
       const errorMessage = error.response?.data?.detail || (useSpanish 
-        ? "Error al guardar los criterios. Inténtelo de nuevo más tarde." 
-        : "Error saving criteria. Please try again later.");
+        ? t('components.searchCriteria.errors.saveCriteria')
+        : t('components.searchCriteria.errors.saveCriteria'));
       
       toast({
-        title: useSpanish ? "Error" : "Error",
+        title: useSpanish ? t('components.common.error') : t('components.common.error'),
         description: errorMessage,
         variant: "destructive"
       });
@@ -401,20 +405,9 @@ const SearchCriteriaSettings = () => {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-medium mb-4">Search Criteria</h2>
+      <h2 className="text-xl font-medium mb-4">{t('components.searchCriteria.title')}</h2>
 
-      {/* Language toggle for entire form */}
-      <div className="flex justify-end items-center space-x-2 mb-4">
-        <span className="text-sm text-gray-600 dark:text-gray-400">
-          {useSpanish ? 'Español' : 'English'}
-        </span>
-        <Switch 
-          checked={useSpanish}
-          onCheckedChange={setUseSpanish}
-          aria-label="Toggle language"
-        />
-      </div>
-
+      
       {loadError && (
         <Alert variant="destructive" className="mb-4">
           <AlertCircle className="h-4 w-4" />
@@ -426,13 +419,13 @@ const SearchCriteriaSettings = () => {
         <div className="flex items-center justify-center h-40">
           <Loader2 className="h-8 w-8 animate-spin text-gober-primary-500" />
           <span className="ml-2 text-lg text-gober-primary-700 dark:text-gober-primary-300">
-            {useSpanish ? 'Cargando criterios...' : 'Loading criteria...'}
+            {useSpanish ? t('components.searchCriteria.loading') : t('components.searchCriteria.loading')}
           </span>
         </div>
       ) : (
       <div className="space-y-5">
         <div className="space-y-3">
-            <Label htmlFor="cpv-input">{useSpanish ? 'Códigos CPV' : 'CPV Codes'}</Label>
+            <Label htmlFor="cpv-input">{useSpanish ? t('components.searchCriteria.cpvCodes') : t('components.searchCriteria.cpvCodes')}</Label>
           <div className="flex flex-wrap gap-2 mb-2">
             {selectedCPV.map((cpv) => (
               <Badge 
@@ -455,8 +448,8 @@ const SearchCriteriaSettings = () => {
             id="cpv-input"
                 ref={cpvInputRef}
                 placeholder={useSpanish 
-                  ? `Buscar por código o descripción CPV...` 
-                  : `Search for CPV code or description...`
+                  ? tUI('filterPanel.categories.placeholder')
+                  : tUI('filterPanel.categories.placeholder')
                 }
                 value={cpvInputValue}
                 onChange={handleCpvInputChange}
@@ -472,13 +465,13 @@ const SearchCriteriaSettings = () => {
                   {isSearchingCpv ? (
                     <div className="flex items-center justify-center p-4">
                       <Loader2 className="h-5 w-5 animate-spin text-gober-accent-500 mr-2" />
-                      <span>{useSpanish ? 'Buscando...' : 'Searching...'}</span>
+                      <span>{useSpanish ? tUI('filterPanel.categories.searching') : tUI('filterPanel.categories.searching')}</span>
                     </div>
                   ) : cpvSearchResults.length === 0 ? (
                     <div className="p-4 text-center text-gray-500 dark:text-gray-400">
                       {useSpanish 
-                        ? 'No se encontraron códigos CPV. Intente con otro término de búsqueda.' 
-                        : 'No CPV codes found. Try a different search term.'
+                        ? tUI('filterPanel.categories.noResults')
+                        : tUI('filterPanel.categories.noResults')
                       }
                     </div>
                   ) : (
@@ -501,7 +494,7 @@ const SearchCriteriaSettings = () => {
         </div>
         
         <div className="space-y-3">
-            <Label htmlFor="keyword-input">{useSpanish ? 'Palabras Clave' : 'Keywords'}</Label>
+            <Label htmlFor="keyword-input">{useSpanish ? t('components.searchCriteria.keywords') : t('components.searchCriteria.keywords')}</Label>
           <div className="flex flex-wrap gap-2 mb-2">
             {selectedKeywords.map((keyword) => (
               <Badge 
@@ -520,8 +513,8 @@ const SearchCriteriaSettings = () => {
           <Input 
             id="keyword-input"
               placeholder={useSpanish 
-                ? "Escriba una palabra clave y presione Enter..." 
-                : "Type a keyword and press Enter..."
+                ? t('components.searchCriteria.keywordPlaceholder')
+                : t('components.searchCriteria.keywordPlaceholder')
               } 
             onKeyDown={(e) => {
               if (e.key === 'Enter') {
@@ -537,7 +530,7 @@ const SearchCriteriaSettings = () => {
         
           {/* Contract Types (Bilingual) */}
         <div className="space-y-3">
-            <Label>{useSpanish ? 'Tipos de Contrato' : 'Contract Types'}</Label>
+            <Label>{useSpanish ? t('components.searchCriteria.contractTypes') : t('components.searchCriteria.contractTypes')}</Label>
           <div className="flex flex-wrap gap-2 mb-2">
               {selectedContractTypes.map((contractType) => (
               <Badge 
@@ -555,7 +548,7 @@ const SearchCriteriaSettings = () => {
           </div>
             <Select onValueChange={handleAddContractType}>
             <SelectTrigger>
-                <SelectValue placeholder={useSpanish ? "Seleccionar tipo de contrato" : "Select contract type"} />
+                <SelectValue placeholder={useSpanish ? t('components.searchCriteria.selectContractType') : t('components.searchCriteria.selectContractType')} />
             </SelectTrigger>
             <SelectContent>
                 {contractTypes.map(contractType => (
@@ -569,7 +562,7 @@ const SearchCriteriaSettings = () => {
         
         <div className="space-y-4 bg-gober-bg-100 dark:bg-gober-primary-700/30 p-4 rounded-lg">
           <div className="flex justify-between items-center">
-              <Label className="text-base">{useSpanish ? 'Rango de Presupuesto' : 'Budget Range'}</Label>
+              <Label className="text-base">{useSpanish ? tUI('filterPanel.budget.title') : tUI('filterPanel.budget.title')}</Label>
             <span className="text-sm font-medium px-3 py-1 rounded-full bg-gober-bg-200 dark:bg-gober-primary-700">
               {formatBudgetValue(budgetRange[0])} - {formatBudgetValue(budgetRange[1])}
             </span>
@@ -597,12 +590,12 @@ const SearchCriteriaSettings = () => {
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {useSpanish ? 'Guardando...' : 'Saving...'}
+                {useSpanish ? t('components.searchCriteria.saving') : t('components.searchCriteria.saving')}
               </>
             ) : (
               <>
                 <CheckCircle2 className="mr-2 h-4 w-4" />
-                {useSpanish ? 'Guardar Criterios de Búsqueda' : 'Save Search Criteria'}
+                {useSpanish ? t('components.searchCriteria.saveButton') : t('components.searchCriteria.saveButton')}
               </>
             )}
           </Button>

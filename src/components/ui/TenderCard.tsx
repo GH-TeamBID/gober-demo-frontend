@@ -8,6 +8,7 @@ import { SortField } from '@/types/types';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import TenderStatusActions from '../tender/TenderStatusActions';
+import { useTranslation } from 'react-i18next';
 
 interface TenderCardProps {
   tender: TenderPreview;
@@ -28,6 +29,7 @@ const TenderCard = ({
   const [isSaved, setIsSaved] = useState(initialIsSaved);
   const [isToggling, setIsToggling] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('ui');
   
   // Ref to track last save/unsave to prevent abuse
   const lastToggleRef = useRef<number>(0);
@@ -136,27 +138,27 @@ const TenderCard = ({
   }
 
   // Safely extract values with fallbacks to prevent rendering errors
-  const tenderId = tender.tender_id || 'N/A';
+  const tenderId = tender.tender_id || t('tenderCard.notSpecified');
   const tenderHash = tender.tender_hash || '';
-  const title = tender.title || 'Untitled Tender';
-  const description = tender.description || 'No description available';
+  const title = tender.title || t('tenderCard.untitled');
+  const description = tender.description || t('tenderCard.noDescription');
   const nLots = tender.n_lots || 0;
-  const orgName = tender.pub_org_name || 'Unknown';
-  const location = tender.location || 'Not specified';
-  const contractType = tender.contract_type || 'Not specified';
+  const orgName = tender.pub_org_name || t('tenderCard.unknown');
+  const location = tender.location || t('tenderCard.notSpecified');
+  const contractType = tender.contract_type || t('tenderCard.notSpecified');
   
   // Show all categories instead of just the first one
   const tenderCategories = tender.cpv_categories && tender.cpv_categories.length > 0
     ? tender.cpv_categories
-    : ['Not specified'];
+    : [t('tenderCard.notSpecified')];
   
   // Contract type mapping
   const contractTypeMap: Record<string, string> = {
-    '1': 'Works',
-    '2': 'Supplies', 
-    '3': 'Services',
-    '4': 'Mixed',
-    '0': 'Other'
+    '1': t('tenderCard.contractTypes.works'),
+    '2': t('tenderCard.contractTypes.supplies'), 
+    '3': t('tenderCard.contractTypes.services'),
+    '4': t('tenderCard.contractTypes.mixed'),
+    '0': t('tenderCard.contractTypes.other')
   };
   
   // Get human-readable contract type
@@ -167,10 +169,10 @@ const TenderCard = ({
   };
   
   const formatCurrency = (amount?: number, currency: string = 'EUR') => {
-    if (amount === undefined) return 'Not specified';
+    if (amount === undefined) return t('tenderCard.notSpecified');
     
     // Format with dot as thousands separator and currency at end
-    return new Intl.NumberFormat('de-DE', {
+    return new Intl.NumberFormat('es-ES', {
       style: 'decimal',
       maximumFractionDigits: 0,
     }).format(amount) + ' €';
@@ -343,10 +345,10 @@ const TenderCard = ({
             
             {/* Status - No direct mapping in API, using placeholder */}
             <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
-              {showHeaders && <div className="text-xs text-gray-500 mb-1">Status</div>}
+              {showHeaders && <div className="text-xs text-gray-500 mb-1">{t('tenderCard.status')}</div>}
               <div className="text-sm flex items-center gap-1">
                 <TenderStatusIcon status="Open" />
-                <span>Open</span>
+                <span>{t('tenderCard.open')}</span>
               </div>
             </div>
             
@@ -355,27 +357,26 @@ const TenderCard = ({
               isSaved={isSaved} 
               onToggleSave={handleSaveToggle} 
               getStatusClass={getSortedStyle}
-              status="Open"
             />
           
             {/* Mobile expandable section for additional information */}
             <div className="md:hidden mt-2 pt-2 border-t text-sm grid grid-cols-2 gap-x-4 gap-y-2">
               <div>
-                <span className="text-xs text-gray-500">Location:</span> {location}
+                <span className="text-xs text-gray-500">{t('tenderCard.location')}:</span> {location}
               </div>
               <div>
-                <span className="text-xs text-gray-500">Contract:</span> {getContractTypeLabel(contractType)}
+                <span className="text-xs text-gray-500">{t('tenderCard.contract')}:</span> {getContractTypeLabel(contractType)}
               </div>
               <div>
-                <span className="text-xs text-gray-500">Categories:</span>
+                <span className="text-xs text-gray-500">{t('tenderCard.categories')}:</span>
                 {tenderCategories.map((category, index) => (
                   <div key={index} className={index > 0 ? "mt-1 ml-2" : ""}>{category}</div>
                 ))}
               </div>
               <div className="flex items-center gap-1">
-                <span className="text-xs text-gray-500">Status:</span>
+                <span className="text-xs text-gray-500">{t('tenderCard.status')}:</span>
                 <TenderStatusIcon status="Open" />
-                <span>Open</span>
+                <span>{t('tenderCard.open')}</span>
               </div>
             </div>
           </div>

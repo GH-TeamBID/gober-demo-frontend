@@ -6,17 +6,19 @@ import PasswordSettings from '@/components/settings/PasswordSettings';
 import UsersList from '@/components/settings/UsersList';
 import SearchCriteriaSettings from '@/components/settings/SearchCriteriaSettings';
 import { useRole } from '@/hooks/useRole';
+import { useTranslation } from 'react-i18next';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState("password");
   const { isStaff } = useRole();
+  const { t } = useTranslation('settings');
 
   // Generate tabs based on user role
   const tabs = [
-    { id: "password", label: "Password", icon: <Lock className="h-4 w-4 mr-2" /> },
+    { id: "password", label: t('tabs.password'), icon: <Lock className="h-4 w-4 mr-2" /> },
     // Only show Users tab for staff (admin/account_manager)
-    ...(isStaff ? [{ id: "users", label: "Users", icon: <Users className="h-4 w-4 mr-2" /> }] : []),
-    { id: "criteria", label: "Search Criteria", icon: <Search className="h-4 w-4 mr-2" /> },
+    ...(isStaff ? [{ id: "users", label: t('tabs.users'), icon: <Users className="h-4 w-4 mr-2" /> }] : []),
+    { id: "criteria", label: t('tabs.criteria'), icon: <Search className="h-4 w-4 mr-2" /> },
   ];
   
   // If user role changes and they're on a tab they shouldn't see, reset to password tab
@@ -29,14 +31,14 @@ const Settings = () => {
   return (
     <Layout>
       <div className="page-container">
-        <h1 className="mb-8">Settings</h1>
+        <h1 className="mb-8">{t('page.title')}</h1>
         
         <div className="grid grid-cols-12 gap-6 max-w-6xl mx-auto">
           {/* Sidebar with vertical tabs */}
           <div className="col-span-12 md:col-span-3">
             <div className="bg-white dark:bg-gober-primary-800 rounded-lg shadow-sm border border-border">
               <div className="p-4 font-medium border-b">
-                Settings Menu
+                {t('page.menu')}
               </div>
               <div className="flex flex-col p-2">
                 {tabs.map((tab) => (

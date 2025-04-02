@@ -9,6 +9,7 @@ import { apiClient } from '@/lib/auth';
 import AISummary from '@/components/ui/AISummary';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
+import { useTranslation } from 'react-i18next';
 
 interface TenderDetailTabsProps {
   tender: TenderDetail;
@@ -22,7 +23,6 @@ interface TenderDetailTabsProps {
 
 // Configuration constants
 const MIN_LOADING_TIME_MS = 2000;
-const ERROR_MESSAGE = "Error loading AI document content. Please try again later.";
 
 const TenderDetailTabs = ({
   tender,
@@ -33,11 +33,17 @@ const TenderDetailTabs = ({
   activeTab,
   setActiveTab
 }: TenderDetailTabsProps) => {
+  const { t } = useTranslation('tenders');
+  const { t: tCommon } = useTranslation('common');
+  
   const [isDocumentLoading, setIsDocumentLoading] = useState(true);
   const [markdownContent, setMarkdownContent] = useState<string>("");
   const [isRequestingAI, setIsRequestingAI] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
+
+  // Error message with translation
+  const ERROR_MESSAGE = t('aiDocument.errorLoading', "Error loading AI document content. Please try again later.");
 
   // Helper to create a cancellable timeout
   const timeout = (ms: number) => {
@@ -101,7 +107,7 @@ const TenderDetailTabs = ({
         abortControllerRef.current.abort();
       }
     };
-  }, [tender.id]);
+  }, [tender.id, ERROR_MESSAGE]);
 
   // If we're loading, switch to details tab
   useEffect(() => {
@@ -131,8 +137,8 @@ const TenderDetailTabs = ({
       if (response && response.task_id) {
         console.log(`[AI-DEBUG] AI summary request initiated with task ID: ${response.task_id}`);
         toast({
-          title: "AI Summary Requested",
-          description: "We're generating an AI summary for this tender. Please check back later.",
+          title: t('aiSummary.requested', "AI Summary Requested"),
+          description: t('aiSummary.generating', "We're generating an AI summary for this tender. Please check back later."),
         });
       } else {
         throw new Error("Invalid response format from API");
@@ -140,8 +146,8 @@ const TenderDetailTabs = ({
     } catch (error) {
       console.error("[AI-DEBUG] Error requesting AI summary:", error);
       toast({
-        title: "Request Failed",
-        description: "Failed to request AI summary. Please try again later.",
+        title: t('aiSummary.requestFailed', "Request Failed"),
+        description: t('aiSummary.requestFailedDescription', "Failed to request AI summary. Please try again later."),
         variant: "destructive"
       });
     } finally {
@@ -162,11 +168,11 @@ const TenderDetailTabs = ({
             <div className="flex items-center justify-between">
               <div className="flex items-center">
                 <Sparkles className="h-5 w-5 text-gray-400 mr-2" />
-                <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">AI Summary</h3>
+                <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">{t('aiSummary.title', "AI Summary")}</h3>
               </div>
             </div>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-              No AI summary available yet. Save this tender to generate one.
+              {t('aiSummary.notAvailable', "No AI summary available yet. Save this tender to generate one.")}
             </p>
           </div>
         </div>
@@ -174,9 +180,9 @@ const TenderDetailTabs = ({
       
       <Tabs defaultValue={activeTab} className="w-full" onValueChange={setActiveTab}>
         <TabsList className="mb-6">
-          <TabsTrigger value="details">Tender Details</TabsTrigger>
+          <TabsTrigger value="details">{t('tabs.details', "Tender Details")}</TabsTrigger>
           <TabsTrigger value="document" disabled={isDocumentLoading}>
-            AI Document {isDocumentLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+            {t('tabs.aiDocument', "AI Document")} {isDocumentLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
           </TabsTrigger>
         </TabsList>
         
@@ -194,7 +200,7 @@ const TenderDetailTabs = ({
           {isDocumentLoading ? (
             <div className="flex justify-center items-center min-h-[400px]">
               <Loader2 className="h-8 w-8 animate-spin text-gober-accent-500" />
-              <span className="ml-2 text-gray-500">Loading document...</span>
+              <span className="ml-2 text-gray-500">{t('aiDocument.loading', "Loading document...")}</span>
             </div>
           ) : (
             <AIDocument 

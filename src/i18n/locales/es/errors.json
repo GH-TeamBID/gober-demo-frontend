@@ -1,0 +1,10 @@
+{
+  "notFound": {
+    "title": "404",
+    "message": "¡Ups! Página no encontrada",
+    "returnHome": "Volver al inicio"
+  },
+  "unableToLoad": "No se pudieron cargar los detalles de la licitación.",
+  "notFoundTender": "Licitación no encontrada",
+  "removed": "La licitación que estás buscando no existe o ha sido eliminada."
+} 

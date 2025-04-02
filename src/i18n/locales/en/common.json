@@ -1,0 +1,26 @@
+{
+  "app": {
+    "name": "Gober",
+    "tagline": "Tender Management Made Simple"
+  },
+  "buttons": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "submit": "Submit"
+  },
+  "language": {
+    "switchLanguage": "Switch language",
+    "en": "English",
+    "es": "Spanish"
+  },
+  "errors": {
+    "notFound": "Not found",
+    "serverError": "Server error",
+    "unauthorized": "Unauthorized access"
+  },
+  "returnToList": "Return to Tenders List"
+} 

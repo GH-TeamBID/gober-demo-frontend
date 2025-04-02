@@ -1,0 +1,26 @@
+{
+  "app": {
+    "name": "Gober",
+    "tagline": "Gestión de Licitaciones Simplificada"
+  },
+  "buttons": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "view": "Ver",
+    "submit": "Enviar"
+  },
+  "language": {
+    "switchLanguage": "Cambiar idioma",
+    "en": "Inglés",
+    "es": "Español"
+  },
+  "errors": {
+    "notFound": "No encontrado",
+    "serverError": "Error del servidor",
+    "unauthorized": "Acceso no autorizado"
+  },
+  "returnToList": "Volver a la Lista de Licitaciones"
+} 

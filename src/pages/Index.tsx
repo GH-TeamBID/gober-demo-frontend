@@ -5,8 +5,10 @@ import SearchBar from '@/components/ui/SearchBar';
 import TenderList from '@/components/ui/TenderList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TendersProvider } from '@/contexts/TendersContext';
+import { useTranslation } from 'react-i18next';
 
 const TendersContent = () => {
+  const { t } = useTranslation('ui');
   const {
     allTenders,
     filteredTenders,
@@ -38,7 +40,7 @@ const TendersContent = () => {
       <div className="page-container">
         <div className="max-w-3xl mx-auto mb-8">
           <h1 className="text-3xl font-bold mb-6 text-center text-gober-primary-900 dark:text-white">
-            Discover Tender Opportunities
+            {t('homepage.title')}
           </h1>
           <SearchBar
             value={searchQuery}
@@ -48,7 +50,7 @@ const TendersContent = () => {
         
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            Error loading tenders: {error}
+            {t('tenderList.errorLoading')}: {error}
           </div>
         )}
         
@@ -59,13 +61,13 @@ const TendersContent = () => {
                 value="all"
                 className="data-[state=active]:bg-gober-accent-500 data-[state=active]:text-white"
               >
-                All Tenders
+                {t('tenderList.allTenders')}
               </TabsTrigger>
               <TabsTrigger 
                 value="saved"
                 className="data-[state=active]:bg-gober-accent-500 data-[state=active]:text-white"
               >
-                Saved Tenders
+                {t('tenderList.savedTenders')}
                 {savedTenders.length > 0 && (
                   <span className="ml-2 bg-white text-gober-accent-500 text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center">
                     {savedTenders.length}
@@ -102,9 +104,9 @@ const TendersContent = () => {
               />
             ) : (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-lg font-medium mb-2">No saved tenders</div>
+                <div className="text-lg font-medium mb-2">{t('tenderList.noSavedTenders')}</div>
                 <p className="text-gray-600 dark:text-gray-400 max-w-md">
-                  Save tenders by clicking the heart icon on tender cards.
+                  {t('tenderList.saveTendersHint')}
                 </p>
               </div>
             )}

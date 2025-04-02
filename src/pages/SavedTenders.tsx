@@ -7,8 +7,11 @@ import { Link } from 'react-router-dom';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { SortState, FilterState } from '@/types/types';
 import { useTenders } from '@/contexts/TendersContext';
+import { useTranslation } from 'react-i18next';
 
 const SavedTendersContent = () => {
+  const { t } = useTranslation('ui');
+  
   // Use global state from TendersProvider instead of local hook
   const {
     savedTenders,
@@ -78,7 +81,7 @@ const SavedTendersContent = () => {
               </Button>
             </Link>
             <h1 className="text-3xl font-bold text-gober-primary-900 dark:text-white">
-              My Saved Tenders
+              {t('savedTenders.title')}
             </h1>
           </div>
           
@@ -112,11 +115,11 @@ const SavedTendersContent = () => {
           </Alert>
         )}
         
-        {/* Initial loading state - nothing to show yet */}
+        {/* Loading State */}
         {isLoading && savedTenders.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-gober-primary-500 mb-4" />
-            <p className="text-gray-600 dark:text-gray-400">Loading your saved tenders...</p>
+            <p className="text-gray-600 dark:text-gray-400">{t('tenderList.loadingTenders')}</p>
           </div>
         ) : savedTenders.length > 0 ? (
           <>
@@ -125,10 +128,13 @@ const SavedTendersContent = () => {
               <div className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md mb-4 flex justify-between items-center">
                 <div className="flex items-center">
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  <span>Loading details for {loadingTendersCount} tenders...</span>
+                  <span>{t('tenderList.loadingDetails', { count: loadingTendersCount })}</span>
                 </div>
                 <span className="text-xs">
-                  {savedTenders.length - loadingTendersCount} of {savedTenders.length} loaded
+                  {t('tenderList.loadedProgress', {
+                    loaded: savedTenders.length - loadingTendersCount,
+                    total: savedTenders.length
+                  })}
                 </span>
               </div>
             )}
@@ -145,14 +151,15 @@ const SavedTendersContent = () => {
             />
           </>
         ) : (
-          <div className="flex flex-col items-center justify-center py-16 text-center">
-            <div className="text-lg font-medium mb-2">No saved tenders</div>
-            <p className="text-gray-600 dark:text-gray-400 max-w-md mb-6">
-              You haven't saved any tenders yet. Browse tenders and click the heart icon to save them.
+          <div className="text-center py-16">
+            <div className="text-lg font-medium mb-4">{t('tenderList.noResults')}</div>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              {t('tenderList.noResultsDescription')}
             </p>
             <Link to="/">
-              <Button className="bg-gober-accent-500 hover:bg-gober-accent-600">
-                Browse Tenders
+              <Button variant="outline" className="flex items-center gap-2">
+                <ArrowLeft className="h-4 w-4" />
+                {t('common.returnToList')}
               </Button>
             </Link>
           </div>

@@ -6,6 +6,7 @@ import { apiClient } from "@/lib/auth";
 import { useToast } from "@/components/ui/use-toast";
 import { AlertCircle, CheckCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { useTranslation } from 'react-i18next';
 
 const PasswordSettings = () => {
   const [currentPassword, setCurrentPassword] = useState('');
@@ -15,6 +16,7 @@ const PasswordSettings = () => {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const { toast } = useToast();
+  const { t } = useTranslation('settings');
 
   // Form validation
   const validateForm = () => {
@@ -22,20 +24,25 @@ const PasswordSettings = () => {
     setError(null);
     
     // Check if all fields are filled
-    if (!currentPassword || !newPassword || !confirmPassword) {
-      setError('All fields are required');
+    if (!currentPassword) {
+      setError(t('components.passwordSettings.errors.currentPasswordRequired'));
+      return false;
+    }
+    
+    if (!newPassword) {
+      setError(t('components.passwordSettings.errors.newPasswordRequired'));
       return false;
     }
     
     // Check if passwords match
     if (newPassword !== confirmPassword) {
-      setError('New password and confirmation do not match');
+      setError(t('components.passwordSettings.errors.passwordsMustMatch'));
       return false;
     }
     
     // Check password minimum length
     if (newPassword.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError(t('components.passwordSettings.errors.passwordTooWeak'));
       return false;
     }
     
@@ -64,10 +71,10 @@ const PasswordSettings = () => {
       });
       
       // Show success message
-      setSuccess('Password updated successfully');
+      setSuccess(t('components.passwordSettings.success'));
       toast({
-        title: "Password updated",
-        description: "Your password has been changed successfully",
+        title: t('components.passwordSettings.success'),
+        description: t('components.passwordSettings.success'),
       });
       
       // Clear form
@@ -77,10 +84,15 @@ const PasswordSettings = () => {
       
     } catch (err: any) {
       // Handle error
-      const errorMessage = err.response?.data?.detail || 'Failed to update password';
+      let errorMessage = t('components.passwordSettings.errors.generalError');
+      
+      if (err.response?.status === 401) {
+        errorMessage = t('components.passwordSettings.errors.currentPasswordIncorrect');
+      }
+      
       setError(errorMessage);
       toast({
-        title: "Password update failed",
+        title: t('components.passwordSettings.errors.generalError'),
         description: errorMessage,
         variant: "destructive",
       });
@@ -91,7 +103,7 @@ const PasswordSettings = () => {
 
   return (
     <div className="space-y-6 max-w-md mx-auto">
-      <h2 className="text-xl font-medium mb-4">Change Password</h2>
+      <h2 className="text-xl font-medium mb-4">{t('components.passwordSettings.title')}</h2>
       
       {error && (
         <Alert variant="destructive" className="mb-4">
@@ -109,7 +121,7 @@ const PasswordSettings = () => {
       
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="current">Current Password</Label>
+          <Label htmlFor="current">{t('components.passwordSettings.currentPassword')}</Label>
           <Input 
             id="current" 
             type="password" 
@@ -118,16 +130,17 @@ const PasswordSettings = () => {
           />
         </div>
         <div className="space-y-2">
-          <Label htmlFor="new">New Password</Label>
+          <Label htmlFor="new">{t('components.passwordSettings.newPassword')}</Label>
           <Input 
             id="new" 
             type="password" 
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
           />
+          <p className="text-xs text-gray-500">{t('components.passwordSettings.requirements')}</p>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm New Password</Label>
+          <Label htmlFor="confirm">{t('components.passwordSettings.confirmPassword')}</Label>
           <Input 
             id="confirm" 
             type="password" 
@@ -140,7 +153,7 @@ const PasswordSettings = () => {
           className="w-full"
           disabled={isLoading}
         >
-          {isLoading ? 'Updating...' : 'Change Password'}
+          {isLoading ? t('buttons.save', { ns: 'common' }) + '...' : t('components.passwordSettings.submitButton')}
         </Button>
       </form>
     </div>

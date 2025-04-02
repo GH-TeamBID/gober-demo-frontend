@@ -1,8 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, Globe } from 'lucide-react';
 import { useAuth } from '@/lib/auth';
+import { useTranslation } from 'react-i18next';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -10,6 +17,9 @@ const Header = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { logout } = useAuth();
+  
+  // Use both header and common namespaces
+  const { t, i18n } = useTranslation(['header', 'common']);
   
   useEffect(() => {
     // Close mobile menu when route changes
@@ -30,13 +40,17 @@ const Header = () => {
     logout();
     navigate('/login');
   };
+
+  const changeLanguage = (lng: string) => {
+    i18n.changeLanguage(lng);
+  };
   
   const navLinks = [
-    { name: 'Overview', path: '/' },
-    { name: 'My Tenders', path: '/saved' },
-    { name: 'Search', path: '/' },
-    { name: 'My Tasks', path: '#' },
-    { name: 'Other Competitors', path: '#' },
+    { name: t('navigation.overview', { ns: 'header' }), path: '/' },
+    { name: t('navigation.myTenders', { ns: 'header' }), path: '/saved' },
+    { name: t('navigation.search', { ns: 'header' }), path: '/' },
+    { name: t('navigation.myTasks', { ns: 'header' }), path: '#' },
+    { name: t('navigation.otherCompetitors', { ns: 'header' }), path: '#' },
   ];
   
   return (
@@ -53,7 +67,7 @@ const Header = () => {
               to="/" 
               className="text-2xl font-bold text-gober-primary-900 dark:text-white transition-colors hover:text-gober-accent-500"
             >
-              Gober.
+              {t('logo', { ns: 'header' })}
             </Link>
           </div>
           
@@ -74,16 +88,39 @@ const Header = () => {
             ))}
           </nav>
           
-          {/* User Profile and Logout */}
+          {/* User Profile, Language Switcher, and Logout */}
           <div className="flex items-center">
+            {/* Language Switcher */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="rounded-full"
+                  aria-label={t('language.switchLanguage', { ns: 'common' })}
+                >
+                  <Globe className="h-5 w-5 text-gober-primary-800 dark:text-gray-300 hover:text-gober-accent-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => changeLanguage('en')}>
+                  {t('language.en', { ns: 'common' })}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => changeLanguage('es')}>
+                  {t('language.es', { ns: 'common' })}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
+            {/* User Settings */}
             <Link to="/settings">
               <Button 
                 variant="ghost" 
                 size="icon" 
-                className="rounded-full"
+                className="rounded-full ml-2"
               >
                 <User className="h-5 w-5" />
-                <span className="sr-only">User settings</span>
+                <span className="sr-only">{t('userActions.userSettings', { ns: 'header' })}</span>
               </Button>
             </Link>
             
@@ -93,10 +130,10 @@ const Header = () => {
               size="icon" 
               className="rounded-full ml-2"
               onClick={handleLogout}
-              aria-label="Logout"
+              aria-label={t('userActions.logout', { ns: 'header' })}
             >
               <LogOut className="h-5 w-5 text-gober-primary-800 dark:text-gray-300 hover:text-gober-accent-500" />
-              <span className="sr-only">Logout</span>
+              <span className="sr-only">{t('userActions.logout', { ns: 'header' })}</span>
             </Button>
             
             {/* Mobile menu button */}
@@ -112,7 +149,7 @@ const Header = () => {
                 ) : (
                   <Menu className="h-6 w-6" aria-hidden="true" />
                 )}
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">{t('userActions.toggleMenu', { ns: 'header' })}</span>
               </Button>
             </div>
           </div>
@@ -148,8 +185,32 @@ const Header = () => {
               }`}
               onClick={() => setIsOpen(false)}
             >
-              Settings
+              {t('navigation.settings', { ns: 'header' })}
             </Link>
+            
+            {/* Add language switcher to mobile menu */}
+            <div className="flex py-2 px-4 items-center">
+              <Globe className="h-4 w-4 mr-2" />
+              <button 
+                className="mr-2 text-base font-medium text-gober-primary-800 dark:text-gray-300"
+                onClick={() => {
+                  changeLanguage('en');
+                  setIsOpen(false);
+                }}
+              >
+                {t('language.en', { ns: 'common' })}
+              </button>
+              <span className="mx-2 text-gray-400">|</span>
+              <button 
+                className="text-base font-medium text-gober-primary-800 dark:text-gray-300"
+                onClick={() => {
+                  changeLanguage('es');
+                  setIsOpen(false);
+                }}
+              >
+                {t('language.es', { ns: 'common' })}
+              </button>
+            </div>
             
             {/* Add Logout link to mobile menu */}
             <button
@@ -161,7 +222,7 @@ const Header = () => {
             >
               <div className="flex items-center">
                 <LogOut className="h-4 w-4 mr-2" />
-                Logout
+                {t('userActions.logout', { ns: 'header' })}
               </div>
             </button>
           </div>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 import { AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useTranslation } from 'react-i18next';
 
 type LocationState = {
   from?: { pathname: string };
@@ -22,6 +23,7 @@ const Login = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation('auth');
   
   // Get the intended destination from location state or default to '/'
   const fromLocation = (location.state as LocationState)?.from;
@@ -33,13 +35,13 @@ const Login = () => {
     setIsLoading(true);
     
     if (!email.trim()) {
-      setError('Email is required');
+      setError(t('login.errors.emailRequired'));
       setIsLoading(false);
       return;
     }
     
     if (!password.trim()) {
-      setError('Password is required');
+      setError(t('login.errors.passwordRequired'));
       setIsLoading(false);
       return;
     }
@@ -49,17 +51,17 @@ const Login = () => {
       
       if (success) {
         toast({
-          title: "Login successful",
-          description: "Welcome back!",
+          title: t('login.toast.successTitle'),
+          description: t('login.toast.successMessage'),
         });
         
         // Navigate to the intended destination
         navigate(from, { replace: true });
       } else {
-        setError('Invalid email or password');
+        setError(t('login.errors.invalidCredentials'));
       }
     } catch (error) {
-      setError('An error occurred during login. Please try again.');
+      setError(t('login.errors.generalError'));
       console.error('Login error:', error);
     } finally {
       setIsLoading(false);
@@ -70,15 +72,15 @@ const Login = () => {
     <div className="min-h-screen flex flex-col items-center justify-center bg-gober-bg-100 dark:bg-gober-primary-900 p-4">
       <div className="w-full max-w-md">
         <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold mb-2 text-gober-primary-900 dark:text-white">Gober.</h1>
-          <p className="text-gray-600 dark:text-gray-400">Sign in to access your account</p>
+          <h1 className="text-3xl font-bold mb-2 text-gober-primary-900 dark:text-white">{t('login.title')}</h1>
+          <p className="text-gray-600 dark:text-gray-400">{t('login.subtitle')}</p>
         </div>
         
         <Card className="border-gray-200 dark:border-gray-700">
           <CardHeader>
-            <CardTitle>Login</CardTitle>
+            <CardTitle>{t('login.card.title')}</CardTitle>
             <CardDescription>
-              Enter your credentials to access the tender management platform
+              {t('login.card.description')}
             </CardDescription>
           </CardHeader>
           <form onSubmit={handleSubmit}>
@@ -90,11 +92,11 @@ const Login = () => {
                 </Alert>
               )}
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('login.form.email')}</Label>
                 <Input 
                   id="email" 
                   type="email" 
-                  placeholder="name@example.com" 
+                  placeholder={t('login.form.emailPlaceholder')}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
@@ -102,15 +104,15 @@ const Login = () => {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('login.form.password')}</Label>
                   <a href="#" className="text-sm text-gober-accent-500 hover:text-gober-accent-600">
-                    Forgot password?
+                    {t('login.form.forgotPassword')}
                   </a>
                 </div>
                 <Input 
                   id="password" 
                   type="password" 
-                  placeholder="••••••••" 
+                  placeholder={t('login.form.passwordPlaceholder')} 
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
@@ -123,12 +125,12 @@ const Login = () => {
                 className="w-full bg-gober-accent-500 hover:bg-gober-accent-600"
                 disabled={isLoading}
               >
-                {isLoading ? 'Signing in...' : 'Sign in'}
+                {isLoading ? t('login.form.signingIn') : t('login.form.signInButton')}
               </Button>
               <p className="text-center text-sm text-gray-600 dark:text-gray-400 mt-4">
-                Don't have an account?{' '}
+                {t('login.form.noAccount')}{' '}
                 <a href="#" className="text-gober-accent-500 hover:text-gober-accent-600">
-                  Contact your administrator
+                  {t('login.form.contactAdmin')}
                 </a>
               </p>
             </CardFooter>

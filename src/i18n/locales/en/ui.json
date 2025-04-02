@@ -1,0 +1,107 @@
+{
+  "homepage": {
+    "title": "Discover Tender Opportunities"
+  },
+  "search": {
+    "placeholder": "Search by tender name, ID, category, or keyword",
+    "clearButton": "Clear search"
+  },
+  "savedTenders": {
+    "title": "My Saved Tenders"
+  },
+  "filterPanel": {
+    "title": "Filters",
+    "close": "Close",
+    "budget": {
+      "title": "Budget Range",
+      "min": "Min",
+      "max": "Max"
+    },
+    "categories": {
+      "title": "Categories",
+      "placeholder": "Search for CPV code or description...",
+      "searching": "Searching...",
+      "noResults": "No results found"
+    },
+    "status": {
+      "title": "Status",
+      "open": "Open",
+      "evaluation": "Evaluation",
+      "awarded": "Awarded",
+      "result": "Result"
+    },
+    "date": {
+      "title": "Date Range",
+      "from": "From",
+      "to": "To",
+      "pickDate": "Pick a date"
+    },
+    "buttons": {
+      "apply": "Apply Filters",
+      "reset": "Reset Filters"
+    }
+  },
+  "tenderList": {
+    "allTenders": "All Tenders",
+    "savedTenders": "Saved Tenders",
+    "noSavedTenders": "No saved tenders",
+    "saveTendersHint": "Save tenders by clicking the heart icon on tender cards.",
+    "loadMore": "Load More",
+    "loading": "Loading...",
+    "loadingResults": "Loading results...",
+    "loadingTenders": "Loading your saved tenders...",
+    "loadingDetails": "Loading details for {count} tenders...",
+    "loadedProgress": "{loaded} of {total} loaded",
+    "errorLoading": "Error loading tenders",
+    "noResults": "No tenders found",
+    "noResultsDescription": "Try adjusting your search or filters to find what you're looking for.",
+    "showing": "Showing",
+    "of": "of",
+    "tenders": "tenders",
+    "filters": "Filters",
+    "clearFilters": "Clear all filters",
+    "endOfResults": "You've reached the end of the tender list.",
+    "noMoreTenders": "No more tenders to load."
+  },
+  "tenderCard": {
+    "id": "ID",
+    "title": "Title",
+    "submit": "Submit On",
+    "lots": "Lots",
+    "organization": "Organization",
+    "budget": "Budget",
+    "location": "Location",
+    "type": "Type",
+    "category": "Category",
+    "status": "Status",
+    "more": "more",
+    "loading": "Loading",
+    "untitled": "Untitled Tender",
+    "noDescription": "No description available",
+    "unknown": "Unknown",
+    "notSpecified": "Not specified",
+    "contract": "Contract Type",
+    "categories": "Categories",
+    "open": "Open",
+    "contractTypes": {
+      "works": "Works",
+      "supplies": "Supplies",
+      "services": "Services",
+      "mixed": "Mixed",
+      "other": "Other"
+    }
+  },
+  "tenderResults": {
+    "columns": {
+      "id": "ID",
+      "title": "Title",
+      "submitOn": "Submit On",
+      "lots": "Lots",
+      "organization": "Organization",
+      "budget": "Budget",
+      "location": "Location",
+      "type": "Type",
+      "category": "Category"
+    }
+  }
+} 

@@ -9,6 +9,7 @@ import { useTenders } from '@/contexts/TendersContext';
 import TenderCard from './TenderCard';
 import { TenderPreview, TenderParams, fetchTenders } from '@/services/tenderService';
 import { useSavedTenders } from '@/hooks/useSavedTenders.tsx';
+import { useTranslation } from 'react-i18next';
 import React from 'react';
 
 // Updated interface to only use TenderPreview
@@ -71,6 +72,8 @@ const TenderList = ({
   filters: filtersProp,
   onFilter = () => {},
 }: TenderListProps) => {
+  const { t } = useTranslation('ui');
+
   // Use context when TenderList is used within TendersProvider
   const {
     tenders: contextTenders = [],
@@ -341,11 +344,11 @@ const TenderList = ({
     
     return (
       <span>
-        Showing <strong>{currentCount}</strong> 
+        {t('tenderList.showing')} <strong>{currentCount}</strong> 
         {totalTenders > 0 && currentCount < totalTenders && (
-          <> of <strong>{totalTenders}</strong></>
+          <> {t('tenderList.of')} <strong>{totalTenders}</strong></>
         )} 
-        tenders
+        {' ' + t('tenderList.tenders')}
       </span>
     );
   };
@@ -365,7 +368,7 @@ const TenderList = ({
           disabled={isLoading && initialLoad}
         >
           <Filter className="h-4 w-4" />
-          <span>Filters</span>
+          <span>{t('tenderList.filters')}</span>
           {getActiveFilterCount() > 0 && (
             <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-gober-accent-500 text-xs text-white">
               {getActiveFilterCount()}
@@ -377,9 +380,9 @@ const TenderList = ({
       {/* Results Count */}
       <div className="text-sm text-gray-600 dark:text-gray-400">
         {isLoading && baseTenders.length === 0 ? (
-          'Loading results...'
+          t('tenderList.loadingResults')
         ) : error ? (
-          <span className="text-red-500">Error loading tenders</span>
+          <span className="text-red-500">{t('tenderList.errorLoading')}</span>
         ) : (
           getTenderCountText()
         )}
@@ -397,14 +400,14 @@ const TenderList = ({
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 className="mt-2 text-sm font-medium">No tenders found</h3>
-              <p className="mt-1 text-sm">No tenders match your current criteria.</p>
+              <h3 className="mt-2 text-sm font-medium">{t('tenderList.noResults')}</h3>
+              <p className="mt-1 text-sm">{t('tenderList.noResultsDescription')}</p>
               {getActiveFilterCount() > 0 && (
                 <button 
                   onClick={handleResetFilters}
                   className="mt-3 text-sm text-gober-accent-500 hover:text-gober-accent-600"
                 >
-                  Clear all filters
+                  {t('tenderList.clearFilters')}
                 </button>
               )}
             </div>

@@ -12,6 +12,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { useTranslation } from 'react-i18next';
 import {
   Accordion,
   AccordionContent,
@@ -50,6 +51,7 @@ const FilterPanel = ({
   onApplyFilters,
   onReset,
 }: FilterPanelProps) => {
+  const { t, i18n } = useTranslation('ui');
   const [localFilters, setLocalFilters] = useState<FilterState>(filters);
   
   const [categoryInput, setCategoryInput] = useState('');
@@ -94,7 +96,7 @@ const FilterPanel = ({
     try {
       const params: Record<string, string | number> = {
         limit: 10,
-        lang: 'en'
+        lang: i18n.language === 'es' ? 'es' : 'en'
       };
       
       if (/^\d+$/.test(query)) {
@@ -151,7 +153,10 @@ const FilterPanel = ({
   
   const handleCategorySelect = (cpv: CPVCodeResponse) => {
     console.log("Selected category:", cpv);
-    const categoryValue = `${cpv.code} - ${cpv.description}`;
+    // Use the appropriate description based on the current language
+    const description = i18n.language === 'es' && cpv.es_description ? cpv.es_description : cpv.description;
+    const categoryValue = `${cpv.code} - ${description}`;
+    
     if (!localFilters.categories.includes(categoryValue)) {
       setLocalFilters(prev => ({
         ...prev,
@@ -224,6 +229,17 @@ const FilterPanel = ({
     }
   };
   
+  // Get localized status labels
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Open': return t('filterPanel.status.open');
+      case 'Evaluation': return t('filterPanel.status.evaluation');
+      case 'Awarded': return t('filterPanel.status.awarded');
+      case 'Result': return t('filterPanel.status.result');
+      default: return status;
+    }
+  };
+  
   return (
     <div
       className={`fixed inset-0 z-50 bg-black bg-opacity-50 transition-opacity ${
@@ -238,46 +254,61 @@ const FilterPanel = ({
         onClick={(e) => e.stopPropagation()}
       >
         <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-white dark:bg-gober-primary-800 border-b">
-          <h2 className="text-xl font-semibold">Filters</h2>
+          <h2 className="text-xl font-semibold">{t('filterPanel.title')}</h2>
           <Button variant="ghost" size="icon" onClick={onClose}>
             <X className="h-5 w-5" />
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{t('filterPanel.close')}</span>
           </Button>
         </div>
         
         <div className="p-4 space-y-6">
           {/* Budget Range */}
           <div className="space-y-4">
-            <Label className="text-lg font-medium">Budget Range</Label>
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">
-                {localFilters.budgetRange[0].toLocaleString()} €
-              </span>
-              <span className="text-sm font-medium">
-                {localFilters.budgetRange[1].toLocaleString()} €
-              </span>
+            <h3 className="text-lg font-medium">{t('filterPanel.budget.title')}</h3>
+            <div className="pt-4">
+              <Slider
+                defaultValue={localFilters.budgetRange}
+                min={0}
+                max={10000000}
+                step={50000}
+                onValueChange={handleBudgetChange}
+              />
+              <div className="flex justify-between mt-2">
+                <div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('filterPanel.budget.min')}:
+                  </span>{' '}
+                  <span className="font-medium">
+                    {new Intl.NumberFormat('de-DE', {
+                      style: 'currency',
+                      currency: 'EUR',
+                      maximumFractionDigits: 0,
+                    }).format(localFilters.budgetRange[0])}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                    {t('filterPanel.budget.max')}:
+                  </span>{' '}
+                  <span className="font-medium">
+                    {new Intl.NumberFormat('de-DE', {
+                      style: 'currency',
+                      currency: 'EUR',
+                      maximumFractionDigits: 0,
+                    }).format(localFilters.budgetRange[1])}
+                  </span>
+                </div>
+              </div>
             </div>
-            <Slider
-              defaultValue={[localFilters.budgetRange[0], localFilters.budgetRange[1]]}
-              min={0}
-              max={20000000}
-              step={50000}
-              value={[localFilters.budgetRange[0], localFilters.budgetRange[1]]}
-              onValueChange={handleBudgetChange}
-              className="my-4"
-            />
           </div>
           
-          <div className="space-y-3">
-            <Label className="text-lg font-medium">Categories</Label>
+          {/* Categories */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">{t('filterPanel.categories.title')}</h3>
             
-            <div className="flex flex-wrap gap-2 mb-2">
+            <div className="flex flex-wrap gap-2 mt-2">
               {localFilters.categories.map((category) => (
-                <Badge 
-                  key={category} 
-                  variant="secondary"
-                  className="flex items-center gap-1 py-1.5 px-3 bg-gober-bg-200 dark:bg-gober-primary-700 text-gober-primary-800 dark:text-gray-300"
-                >
+                <Badge key={category} variant="secondary" className="text-xs">
                   {category}
                   <X 
                     className="h-3 w-3 cursor-pointer ml-1 text-gober-primary-600" 
@@ -298,7 +329,7 @@ const FilterPanel = ({
                     setShowCategorySuggestions(true);
                   }
                 }}
-                placeholder="Search for CPV code or description..."
+                placeholder={t('filterPanel.categories.placeholder')}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && categoryInput.trim()) {
                     handleAddCategory(categoryInput.trim());
@@ -314,25 +345,32 @@ const FilterPanel = ({
                   {isSearchingCategory ? (
                     <div className="flex items-center justify-center p-4">
                       <Loader2 className="h-5 w-5 animate-spin text-gober-accent-500 mr-2" />
-                      <span>Searching...</span>
+                      <span>{t('filterPanel.categories.searching')}</span>
                     </div>
                   ) : categorySearchResults.length === 0 ? (
                     <div className="p-4 text-center text-gray-500 dark:text-gray-400">
-                      No categories found. Try a different search term.
+                      {t('filterPanel.categories.noResults')}
                     </div>
                   ) : (
-                    categorySearchResults.map(cpv => (
-                      <div
-                        key={cpv.code}
-                        className="px-4 py-2 cursor-pointer hover:bg-gober-accent-500/10 dark:hover:bg-gober-primary-700"
-                        onClick={() => handleCategorySelect(cpv)}
-                      >
-                        <div className="font-medium">{cpv.code}</div>
-                        <div className="text-sm text-gray-600 dark:text-gray-400">
-                          {cpv.description}
-                        </div>
-                      </div>
-                    ))
+                    <ul className="py-1">
+                      {categorySearchResults.map((cpv) => {
+                        // Use the appropriate description based on the current language
+                        const description = i18n.language === 'es' && cpv.es_description 
+                          ? cpv.es_description 
+                          : cpv.description;
+                        
+                        return (
+                          <li
+                            key={cpv.code}
+                            className="px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gober-primary-700 cursor-pointer"
+                            onClick={() => handleCategorySelect(cpv)}
+                          >
+                            <div className="font-medium">{cpv.code}</div>
+                            <div className="text-gray-600 dark:text-gray-400 text-xs">{description}</div>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   )}
                 </div>
               )}
@@ -340,58 +378,54 @@ const FilterPanel = ({
           </div>
           
           {/* Status */}
-          <Accordion type="single" collapsible className="w-full">
-            <AccordionItem value="status">
-              <AccordionTrigger className="text-lg font-medium">
-                Status
-              </AccordionTrigger>
-              <AccordionContent>
-                <div className="space-y-2 pt-2">
-                  {STATUSES.map((status) => (
-                    <div key={status} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`status-${status}`}
-                        checked={localFilters.status.includes(status)}
-                        onCheckedChange={(checked) =>
-                          handleStatusChange(status, checked as boolean)
-                        }
-                      />
-                      <Label
-                        htmlFor={`status-${status}`}
-                        className="text-sm font-medium cursor-pointer"
-                      >
-                        {status}
-                      </Label>
-                    </div>
-                  ))}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium">{t('filterPanel.status.title')}</h3>
+            <div className="flex flex-col space-y-2">
+              {STATUSES.map((status) => (
+                <div key={status} className="flex items-center space-x-2">
+                  <Checkbox
+                    id={`status-${status}`}
+                    checked={localFilters.status.includes(status)}
+                    onCheckedChange={(checked) =>
+                      handleStatusChange(status, checked as boolean)
+                    }
+                  />
+                  <Label
+                    htmlFor={`status-${status}`}
+                    className="text-sm font-medium leading-none cursor-pointer"
+                  >
+                    {getStatusLabel(status)}
+                  </Label>
                 </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Accordion>
+              ))}
+            </div>
+          </div>
           
           {/* Date Range */}
           <div className="space-y-4">
-            <Label className="text-lg font-medium">Date Range</Label>
-            <div className="flex flex-col space-y-2">
-              <div className="grid gap-2">
-                <Label htmlFor="from-date" className="text-sm font-medium">
-                  From
+            <h3 className="text-lg font-medium">{t('filterPanel.date.title')}</h3>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-1">
+                <Label htmlFor="date-from" className="text-sm font-medium">
+                  {t('filterPanel.date.from')}
                 </Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      id="from-date"
-                      variant={'outline'}
+                      id="date-from"
+                      variant={"outline"}
                       className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !localFilters.dateRange.from && 'text-muted-foreground'
+                        "w-full mt-1",
+                        !localFilters.dateRange.from && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {localFilters.dateRange.from ? (
-                        format(new Date(localFilters.dateRange.from), 'PPP')
+                        typeof localFilters.dateRange.from === 'string' ? 
+                          localFilters.dateRange.from : 
+                          format(localFilters.dateRange.from, "PPP")
                       ) : (
-                        <span>Pick a date</span>
+                        <span>{t('filterPanel.date.pickDate')}</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -399,37 +433,37 @@ const FilterPanel = ({
                     <Calendar
                       mode="single"
                       selected={
-                        localFilters.dateRange.from
-                          ? new Date(localFilters.dateRange.from)
+                        localFilters.dateRange.from !== null && typeof localFilters.dateRange.from !== 'string' 
+                          ? localFilters.dateRange.from 
                           : undefined
                       }
                       onSelect={(date) => handleDateChange('from', date)}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
               </div>
               
-              <div className="grid gap-2">
-                <Label htmlFor="to-date" className="text-sm font-medium">
-                  To
+              <div className="col-span-1">
+                <Label htmlFor="date-to" className="text-sm font-medium">
+                  {t('filterPanel.date.to')}
                 </Label>
                 <Popover>
                   <PopoverTrigger asChild>
                     <Button
-                      id="to-date"
-                      variant={'outline'}
+                      id="date-to"
+                      variant={"outline"}
                       className={cn(
-                        'w-full justify-start text-left font-normal',
-                        !localFilters.dateRange.to && 'text-muted-foreground'
+                        "w-full mt-1",
+                        !localFilters.dateRange.to && "text-muted-foreground"
                       )}
                     >
                       <CalendarIcon className="mr-2 h-4 w-4" />
                       {localFilters.dateRange.to ? (
-                        format(new Date(localFilters.dateRange.to), 'PPP')
+                        typeof localFilters.dateRange.to === 'string' ? 
+                          localFilters.dateRange.to : 
+                          format(localFilters.dateRange.to, "PPP")
                       ) : (
-                        <span>Pick a date</span>
+                        <span>{t('filterPanel.date.pickDate')}</span>
                       )}
                     </Button>
                   </PopoverTrigger>
@@ -437,13 +471,11 @@ const FilterPanel = ({
                     <Calendar
                       mode="single"
                       selected={
-                        localFilters.dateRange.to
-                          ? new Date(localFilters.dateRange.to)
+                        localFilters.dateRange.to !== null && typeof localFilters.dateRange.to !== 'string' 
+                          ? localFilters.dateRange.to 
                           : undefined
                       }
                       onSelect={(date) => handleDateChange('to', date)}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
                     />
                   </PopoverContent>
                 </Popover>
@@ -452,12 +484,19 @@ const FilterPanel = ({
           </div>
         </div>
         
-        <div className="sticky bottom-0 p-4 bg-white dark:bg-gober-primary-800 border-t flex items-center justify-between">
-          <Button variant="outline" onClick={handleReset}>
-            Reset Filters
+        <div className="sticky bottom-0 bg-white dark:bg-gober-primary-800 border-t p-4 flex space-x-4">
+          <Button
+            variant="outline"
+            onClick={handleReset}
+            className="flex-1"
+          >
+            {t('filterPanel.buttons.reset')}
           </Button>
-          <Button onClick={handleApply} className="bg-gober-accent-500 hover:bg-gober-accent-600">
-            Apply Filters
+          <Button 
+            onClick={handleApply}
+            className="flex-1"
+          >
+            {t('filterPanel.buttons.apply')}
           </Button>
         </div>
       </div>

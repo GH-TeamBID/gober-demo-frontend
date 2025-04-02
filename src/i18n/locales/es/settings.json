@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Configuración",
+    "menu": "Menú de Configuración"
+  },
+  "tabs": {
+    "password": "Contraseña",
+    "users": "Usuarios",
+    "criteria": "Criterios de Búsqueda"
+  },
+  "components": {
+    "passwordSettings": {
+      "title": "Cambiar Contraseña",
+      "currentPassword": "Contraseña Actual",
+      "newPassword": "Nueva Contraseña",
+      "confirmPassword": "Confirmar Contraseña",
+      "requirements": "La contraseña debe tener al menos 8 caracteres e incluir una combinación de letras, números y símbolos.",
+      "submitButton": "Actualizar Contraseña",
+      "success": "¡Contraseña actualizada con éxito!",
+      "errors": {
+        "currentPasswordRequired": "Se requiere la contraseña actual",
+        "newPasswordRequired": "Se requiere una nueva contraseña",
+        "passwordsMustMatch": "Las contraseñas deben coincidir",
+        "passwordTooWeak": "La contraseña es demasiado débil",
+        "currentPasswordIncorrect": "La contraseña actual es incorrecta",
+        "generalError": "Ocurrió un error. Por favor, inténtalo de nuevo."
+      }
+    },
+    "usersList": {
+      "title": "Administrar Usuarios",
+      "addUserButton": "Añadir Usuario",
+      "columns": {
+        "name": "Nombre",
+        "email": "Correo electrónico",
+        "role": "Rol",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "actions": {
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "activate": "Activar",
+        "deactivate": "Desactivar"
+      },
+      "status": {
+        "active": "Activo",
+        "inactive": "Inactivo"
+      },
+      "confirmDelete": "¿Estás seguro de que deseas eliminar este usuario?"
+    },
+    "searchCriteria": {
+      "title": "Configuración de Criterios de Búsqueda",
+      "description": "Configura tus criterios de búsqueda predeterminados para licitaciones",
+      "saveButton": "Guardar Configuración",
+      "defaultFilters": "Filtros Predeterminados",
+      "defaultSorting": "Ordenación Predeterminada",
+      "emailNotifications": "Notificaciones por Correo Electrónico",
+      "notifications": {
+        "title": "Notificaciones",
+        "newTenders": "Nuevas licitaciones que coinciden con los criterios",
+        "deadlineApproaching": "Fecha límite de licitación aproximándose",
+        "statusChanges": "Cambios de estado de licitación"
+      },
+      "cpvCodes": "Códigos CPV",
+      "keywords": "Palabras Clave",
+      "keywordPlaceholder": "Escriba una palabra clave y presione Enter...",
+      "contractTypes": "Tipos de Contrato",
+      "selectContractType": "Seleccionar tipo de contrato",
+      "loading": "Cargando criterios...",
+      "saving": "Guardando...",
+      "languageToggle": "Cambiar idioma",
+      "errors": {
+        "userIdentity": "No se pudo determinar la identidad del usuario. Por favor, inicie sesión de nuevo.",
+        "loadingCriteria": "Error al cargar los criterios de búsqueda. Inténtelo de nuevo más tarde.",
+        "saveCriteria": "Error al guardar los criterios. Inténtelo de nuevo más tarde."
+      },
+      "success": {
+        "title": "Criterios guardados",
+        "message": "Sus criterios de búsqueda han sido guardados correctamente."
+      }
+    },
+    "common": {
+      "error": "Error",
+      "english": "English",
+      "spanish": "Español"
+    }
+  }
+} 

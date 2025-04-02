@@ -1,0 +1,10 @@
+{
+  "notFound": {
+    "title": "404",
+    "message": "Oops! Page not found",
+    "returnHome": "Return to Home"
+  },
+  "unableToLoad": "Unable to load tender details.",
+  "notFoundTender": "Tender Not Found",
+  "removed": "The tender you're looking for doesn't exist or has been removed."
+} 

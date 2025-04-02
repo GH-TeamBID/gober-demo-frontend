@@ -152,6 +152,9 @@ export interface TenderDetail {
   cpv_categories?: string[];
   contract_type?: string;
   
+  // CPV codes - optional array of CPV codes
+  cpv_codes?: Array<{ code: string; description?: string }>;
+  
   // AI generated content
   aiDocument?: string;
   aiSummary?: string;
@@ -679,5 +682,57 @@ export async function requestTenderSummary(tenderId: string, tenderUri: string):
       error.response?.data?.detail || 
       'Failed to request AI summary. Please try again later.'
     );
+  }
+}
+
+/**
+ * Get a tender by ID
+ * 
+ * @param tenderId - The ID of the tender to retrieve
+ * @returns Promise with the tender details
+ */
+export async function getTenderById(tenderId: string): Promise<TenderDetail | null> {
+  try {
+    return await fetchTenderDetail(tenderId);
+  } catch (error) {
+    console.error(`Error fetching tender detail for ${tenderId}:`, error);
+    return null;
+  }
+}
+
+/**
+ * Check if a tender is saved by the current user
+ * 
+ * @param tenderId - The ID of the tender to check
+ * @returns Promise with boolean indicating if tender is saved
+ */
+export async function getTenderSavedState(tenderId: string): Promise<boolean> {
+  try {
+    const response = await apiClient.get(`/tenders/saved/${tenderId}`);
+    return response.data?.is_saved === true;
+  } catch (error) {
+    console.error(`Error checking if tender ${tenderId} is saved:`, error);
+    return false;
+  }
+}
+
+/**
+ * Save AI-generated document content for a tender
+ * 
+ * @param tenderId - The ID of the tender
+ * @param document - The document content to save
+ * @returns Promise indicating success/failure
+ */
+export async function saveAIDocument(tenderId: string, document: string): Promise<boolean> {
+  try {
+    await apiClient.post(`/tenders/ai_documents/${tenderId}`, document, {
+      headers: {
+        'Content-Type': 'text/plain'
+      }
+    });
+    return true;
+  } catch (error) {
+    console.error(`Error saving AI document for tender ${tenderId}:`, error);
+    return false;
   }
 }

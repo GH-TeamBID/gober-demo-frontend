@@ -5,6 +5,7 @@ import TenderStatusActions from './TenderStatusActions';
 import { Badge } from '@/components/ui/badge';
 import { Sparkles, Calendar, MapPin, Building, FileText, Package, Info, ClipboardList, Euro, Briefcase } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useTranslation } from 'react-i18next';
 
 interface TenderDetailsCardProps {
   tender: TenderDetail;
@@ -21,8 +22,10 @@ const TenderDetailsCard = ({
   getStatusClass,
   documents
 }: TenderDetailsCardProps) => {
+  const { t } = useTranslation('tenders');
+  
   const formatCurrency = (value?: { amount?: number; currency?: string }) => {
-    if (!value || !value.amount) return 'Not specified';
+    if (!value || !value.amount) return t('common.notSpecified', 'Not specified');
     
     const currency = value.currency || 'EUR';
     const symbol = currency === 'EUR' ? '€' : currency;
@@ -34,7 +37,7 @@ const TenderDetailsCard = ({
   };
   
   const formatDate = (dateString?: string | null) => {
-    if (!dateString) return 'Not specified';
+    if (!dateString) return t('common.notSpecified', 'Not specified');
     return format(new Date(dateString), 'dd MMMM yyyy');
   };
   
@@ -55,7 +58,7 @@ const TenderDetailsCard = ({
         <div className="px-6 py-5 bg-gray-50 dark:bg-gober-primary-700/30 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
           <div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Tender ID: {tender.tender_id}
+              {t('tenderDetail.identifier', 'Tender ID')}: {tender.tender_id}
             </div>
             <h2 className="text-xl font-semibold mt-1 text-gober-primary-900 dark:text-white">
               {tender.title}
@@ -84,7 +87,7 @@ const TenderDetailsCard = ({
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
               <h3 className="text-base font-medium mb-3 flex items-center text-blue-700 dark:text-blue-300">
                 <Sparkles className="h-4 w-4 mr-2" />
-                <span>AI-Generated Summary</span>
+                <span>{t('aiSummary.title', 'AI-Generated Summary')}</span>
               </h3>
               <p className="text-sm">{tender.aiSummary}</p>
             </div>
@@ -97,26 +100,26 @@ const TenderDetailsCard = ({
               <AccordionTrigger className="text-base font-medium">
                 <span className="flex items-center">
                   <Info className="h-4 w-4 mr-2" />
-                  Basic Details
+                  {t('tenderDetail.sections.basicDetails', 'Basic Details')}
                 </span>
               </AccordionTrigger>
               <AccordionContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 mt-2">
                   {/* Description */}
                   <div className="md:col-span-2">
-                    <div className="text-sm text-gray-500 dark:text-gray-400">Description</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{t('tenderDetail.description', 'Description')}</div>
                     <div className="mt-1">
-                      {tender.description || tender.summary || 'No description provided'}
+                      {tender.description || tender.summary || t('common.noDescriptionProvided', 'No description provided')}
                     </div>
                   </div>
                   
                   {/* Identifiers */}                
                   {tender.identifier && (
                     <div>
-                      <div className="text-sm text-gray-500 dark:text-gray-400">Identifier</div>
+                      <div className="text-sm text-gray-500 dark:text-gray-400">{t('tenderDetail.identifier', 'Identifier')}</div>
                       <div className="mt-1 text-sm">
                         {tender.identifier.scheme && <span>{tender.identifier.scheme}: </span>}
-                        {tender.identifier.notation || 'Not specified'}
+                        {tender.identifier.notation || t('common.notSpecified', 'Not specified')}
                       </div>
                     </div>
                   )}
@@ -129,7 +132,7 @@ const TenderDetailsCard = ({
               <AccordionTrigger className="text-base font-medium">
                 <span className="flex items-center">
                   <Euro className="h-4 w-4 mr-2" />
-                  Financial Information
+                  {t('tenderDetail.sections.financialInfo', 'Financial Information')}
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -137,7 +140,7 @@ const TenderDetailsCard = ({
                   {/* Estimated Value */}
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Estimated Value
+                      {t('tenderDetail.estimatedValue', 'Estimated Value')}
                     </div>
                     <div className="mt-1 font-medium">
                       {formatCurrency(tender.estimated_value)}
@@ -147,7 +150,7 @@ const TenderDetailsCard = ({
                   {/* Net Value */}
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Net Value
+                      {t('tenderDetail.netValue', 'Net Value')}
                     </div>
                     <div className="mt-1">
                       {formatCurrency(tender.net_value)}
@@ -157,7 +160,7 @@ const TenderDetailsCard = ({
                   {/* Gross Value */}
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Gross Value
+                      {t('tenderDetail.grossValue', 'Gross Value')}
                     </div>
                     <div className="mt-1">
                       {formatCurrency(tender.gross_value)}
@@ -172,7 +175,7 @@ const TenderDetailsCard = ({
               <AccordionTrigger className="text-base font-medium">
                 <span className="flex items-center">
                   <Calendar className="h-4 w-4 mr-2" />
-                  Timeline & Periods
+                  {t('tenderDetail.sections.timeline', 'Timeline & Periods')}
                 </span>
               </AccordionTrigger>
               <AccordionContent>
@@ -180,7 +183,7 @@ const TenderDetailsCard = ({
                   {/* Submission Deadline */}
                   <div>
                     <div className="text-sm text-gray-500 dark:text-gray-400">
-                      Submission Deadline
+                      {t('tenderDetail.deadline', 'Submission Deadline')}
                     </div>
                     <div className="mt-1">
                       {formatDate(tender.submission_deadline || tender.submission_date)}
@@ -191,18 +194,18 @@ const TenderDetailsCard = ({
                   {tender.contract_period && (
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Contract Period
+                        {t('tenderDetail.contractPeriod', 'Contract Period')}
                       </div>
                       <div className="mt-1">
                         {tender.contract_period.start_date && formatDate(tender.contract_period.start_date)}
                         {tender.contract_period.start_date && tender.contract_period.end_date && ' - '}
                         {tender.contract_period.end_date && formatDate(tender.contract_period.end_date)}
                         {tender.contract_period.duration_in_months && 
-                          ` (${tender.contract_period.duration_in_months} months)`}
+                          ` (${tender.contract_period.duration_in_months} ${t('common.months', 'months')})`}
                         {!tender.contract_period.start_date && 
                          !tender.contract_period.end_date && 
                          !tender.contract_period.duration_in_months && 
-                         'Not specified'}
+                         t('common.notSpecified', 'Not specified')}
                       </div>
                     </div>
                   )}
@@ -211,18 +214,18 @@ const TenderDetailsCard = ({
                   {tender.planned_period && (
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Planned Period
+                        {t('tenderDetail.plannedPeriod', 'Planned Period')}
                       </div>
                       <div className="mt-1">
                         {tender.planned_period.start_date && formatDate(tender.planned_period.start_date)}
                         {tender.planned_period.start_date && tender.planned_period.end_date && ' - '}
                         {tender.planned_period.end_date && formatDate(tender.planned_period.end_date)}
                         {tender.planned_period.duration_in_months && 
-                          ` (${tender.planned_period.duration_in_months} months)`}
+                          ` (${tender.planned_period.duration_in_months} ${t('common.months', 'months')})`}
                         {!tender.planned_period.start_date && 
                          !tender.planned_period.end_date && 
                          !tender.planned_period.duration_in_months && 
-                         'Not specified'}
+                         t('common.notSpecified', 'Not specified')}
                       </div>
                     </div>
                   )}
@@ -236,7 +239,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <Building className="h-4 w-4 mr-2" />
-                    Organization Information
+                    {t('tenderDetail.sections.organizationInfo', 'Organization Information')}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -244,20 +247,20 @@ const TenderDetailsCard = ({
                     {/* Organization Name */}
                     <div className="md:col-span-2">
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Organization Name
+                        {t('tenderDetail.organizationName', 'Organization Name')}
                       </div>
                       <div className="mt-1 font-medium">
-                        {tender.buyer.legal_name || tender.pub_org_name || 'Not specified'}
+                        {tender.buyer.legal_name || tender.pub_org_name || t('common.notSpecified', 'Not specified')}
                       </div>
                     </div>
                     
                     {tender.buyer.tax_identifier && (
                       <div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Tax Identifier
+                          {t('tenderDetail.taxIdentifier', 'Tax Identifier')}
                         </div>
                         <div className="mt-1">
-                          {tender.buyer.tax_identifier.notation || 'Not specified'}
+                          {tender.buyer.tax_identifier.notation || t('common.notSpecified', 'Not specified')}
                         </div>
                       </div>
                     )}
@@ -266,7 +269,7 @@ const TenderDetailsCard = ({
                     {tender.buyer.address && hasContent(tender.buyer.address) && (
                       <div className="md:col-span-2">
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Address
+                          {t('tenderDetail.address', 'Address')}
                         </div>
                         <div className="mt-1">
                           {[
@@ -276,7 +279,7 @@ const TenderDetailsCard = ({
                             tender.buyer.address.post_name,
                             tender.buyer.address.admin_unit,
                             tender.buyer.address.country_code
-                          ].filter(Boolean).join(', ') || 'Not specified'}
+                          ].filter(Boolean).join(', ') || t('common.notSpecified', 'Not specified')}
                         </div>
                       </div>
                     )}
@@ -287,7 +290,7 @@ const TenderDetailsCard = ({
                         {tender.buyer.contact_point.name && (
                           <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              Contact Person
+                              {t('tenderDetail.contactPerson', 'Contact Person')}
                             </div>
                             <div className="mt-1">
                               {tender.buyer.contact_point.name}
@@ -298,7 +301,7 @@ const TenderDetailsCard = ({
                         {tender.buyer.contact_point.email && (
                           <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              Email
+                              {t('tenderDetail.email', 'Email')}
                             </div>
                             <div className="mt-1">
                               <a href={`mailto:${tender.buyer.contact_point.email}`} className="text-blue-600 hover:underline">
@@ -311,7 +314,7 @@ const TenderDetailsCard = ({
                         {tender.buyer.contact_point.telephone && (
                           <div>
                             <div className="text-sm text-gray-500 dark:text-gray-400">
-                              Telephone
+                              {t('tenderDetail.telephone', 'Telephone')}
                             </div>
                             <div className="mt-1">
                               {tender.buyer.contact_point.telephone}
@@ -331,7 +334,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <MapPin className="h-4 w-4 mr-2" />
-                    Location Information
+                    {t('tenderDetail.sections.locationInfo', 'Location Information')}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -340,7 +343,7 @@ const TenderDetailsCard = ({
                     {tender.place_of_performance.geographic_name && (
                       <div className="md:col-span-2">
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Geographic Area
+                          {t('tenderDetail.geographicArea', 'Geographic Area')}
                         </div>
                         <div className="mt-1">
                           {tender.place_of_performance.geographic_name}
@@ -351,7 +354,7 @@ const TenderDetailsCard = ({
                     {/* Country & NUTS Code */}
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Country
+                        {t('tenderDetail.country', 'Country')}
                       </div>
                       <div className="mt-1">
                         {tender.place_of_performance.country_code || 'España'}
@@ -361,7 +364,7 @@ const TenderDetailsCard = ({
                     {tender.place_of_performance.nuts_code && (
                       <div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          NUTS Code
+                          {t('tenderDetail.nutsCode', 'NUTS Code')}
                         </div>
                         <div className="mt-1">
                           {tender.place_of_performance.nuts_code}
@@ -373,7 +376,7 @@ const TenderDetailsCard = ({
                     {tender.place_of_performance.address && hasContent(tender.place_of_performance.address) && (
                       <div className="md:col-span-2">
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          Address
+                          {t('tenderDetail.address', 'Address')}
                         </div>
                         <div className="mt-1">
                           {[
@@ -383,7 +386,7 @@ const TenderDetailsCard = ({
                             tender.place_of_performance.address.post_name,
                             tender.place_of_performance.address.admin_unit,
                             tender.place_of_performance.address.country_code
-                          ].filter(Boolean).join(', ') || 'Not specified'}
+                          ].filter(Boolean).join(', ') || t('common.notSpecified', 'Not specified')}
                         </div>
                       </div>
                     )}
@@ -398,7 +401,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <Briefcase className="h-4 w-4 mr-2" />
-                    Contract Terms
+                    {t('tenderDetail.sections.contractTerms', 'Contract Terms')}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -406,13 +409,13 @@ const TenderDetailsCard = ({
                     {/* Contract Type */}
                     <div>
                       <div className="text-sm text-gray-500 dark:text-gray-400">
-                        Contract Type
+                        {t('tenderDetail.contractType', 'Contract Type')}
                       </div>
                       <div className="mt-1">
                         {tender.contract_type || (tender.contract_term?.contract_nature_type &&
                          `${tender.contract_term.contract_nature_type}${tender.contract_term.additional_contract_nature ? 
                            ` (${tender.contract_term.additional_contract_nature})` : ''}`
-                        ) || 'Not specified'}
+                        ) || t('common.notSpecified', 'Not specified')}
                       </div>
                     </div>
                   </div>
@@ -426,7 +429,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <FileText className="h-4 w-4 mr-2" />
-                    Classifications
+                    {t('tenderDetail.sections.classifications', 'Classifications')}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -435,7 +438,7 @@ const TenderDetailsCard = ({
                     {tender.purpose.additional_classifications && tender.purpose.additional_classifications.length > 0 && (
                       <div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Additional Classifications
+                          {t('tenderDetail.additionalClassifications', 'Additional Classifications')}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {tender.purpose.additional_classifications.map((cpv, index) => (
@@ -451,7 +454,7 @@ const TenderDetailsCard = ({
                     {tender.cpv_categories && tender.cpv_categories.length > 0 && (
                       <div>
                         <div className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-                          Categories
+                          {t('tenderDetail.categories', 'Categories')}
                         </div>
                         <div className="flex flex-wrap gap-2">
                           {tender.cpv_categories.map((category, index) => (
@@ -473,7 +476,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <Package className="h-4 w-4 mr-2" />
-                    Lots ({tender.lots.length})
+                    {t('tenderDetail.sections.lots', 'Lots')} ({tender.lots.length})
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -481,7 +484,7 @@ const TenderDetailsCard = ({
                     {tender.lots.map((lot, index) => (
                       <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-md p-4">
                         <h4 className="font-medium mb-2">
-                          Lot {lot.id}: {lot.title || 'Untitled'}
+                          {t('tenderDetail.lot', 'Lot')} {lot.id}: {lot.title || t('common.untitled', 'Untitled')}
                         </h4>
                         
                         {lot.description && (
@@ -493,14 +496,14 @@ const TenderDetailsCard = ({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-2 text-sm">
                           {lot.estimated_value && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">Value: </span>
+                              <span className="text-gray-500 dark:text-gray-400">{t('tenderDetail.value', 'Value')}: </span>
                               {formatCurrency(lot.estimated_value)}
                             </div>
                           )}
                           
                           {lot.cpv_codes && lot.cpv_codes.length > 0 && (
                             <div>
-                              <span className="text-gray-500 dark:text-gray-400">CPV Codes: </span>
+                              <span className="text-gray-500 dark:text-gray-400">{t('tenderDetail.cpvCodes', 'CPV Codes')}: </span>
                               {lot.cpv_codes.join(', ')}
                             </div>
                           )}
@@ -518,7 +521,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <ClipboardList className="h-4 w-4 mr-2" />
-                    Documents ({tender.procurement_documents.length})
+                    {t('tenderDetail.documents', 'Documents')} ({tender.procurement_documents.length})
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -537,7 +540,7 @@ const TenderDetailsCard = ({
                             rel="noopener noreferrer"
                             className="text-blue-600 hover:text-blue-800 text-sm"
                           >
-                            Download
+                            {t('common.download', 'Download')}
                           </a>
                         )}
                       </div>
@@ -553,7 +556,7 @@ const TenderDetailsCard = ({
                 <AccordionTrigger className="text-base font-medium">
                   <span className="flex items-center">
                     <Info className="h-4 w-4 mr-2" />
-                    Additional Information
+                    {t('tenderDetail.additionalInformation', 'Additional Information')}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent>
@@ -570,17 +573,17 @@ const TenderDetailsCard = ({
             <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
               <div className="flex items-center text-blue-600 dark:text-blue-400">
                 <Sparkles className="h-4 w-4 mr-2" />
-                <span className="font-medium">AI-Generated Document</span>
+                <span className="font-medium">{t('aiDocument.title', 'AI-Generated Document')}</span>
               </div>
               <div className="mt-2">
                 <a 
-                  href={tender.aiDocument} // Actualmente añade todo el texto
+                  href={tender.aiDocument}
                   target="_blank" 
                   rel="noopener noreferrer"
                   className="text-blue-600 hover:underline inline-flex items-center"
                 >
                   <FileText className="h-4 w-4 mr-1" />
-                  View AI-Generated Document
+                  {t('aiDocument.view', 'View AI-Generated Document')}
                 </a>
               </div>
             </div>

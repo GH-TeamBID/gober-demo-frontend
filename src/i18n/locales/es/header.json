@@ -1,0 +1,16 @@
+{
+  "logo": "Gober.",
+  "navigation": {
+    "overview": "Vista General",
+    "myTenders": "Mis Licitaciones",
+    "search": "Buscar",
+    "myTasks": "Mis Tareas",
+    "otherCompetitors": "Otros Competidores",
+    "settings": "Configuración"
+  },
+  "userActions": {
+    "userSettings": "Configuración de usuario",
+    "logout": "Cerrar sesión",
+    "toggleMenu": "Alternar menú"
+  }
+} 

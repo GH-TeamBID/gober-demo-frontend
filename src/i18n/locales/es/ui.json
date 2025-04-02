@@ -1,0 +1,107 @@
+{
+  "homepage": {
+    "title": "Descubre Oportunidades de Licitación"
+  },
+  "search": {
+    "placeholder": "Buscar por nombre de licitación, ID, categoría o palabra clave",
+    "clearButton": "Limpiar búsqueda"
+  },
+  "savedTenders": {
+    "title": "Mis Licitaciones Guardadas"
+  },
+  "filterPanel": {
+    "title": "Filtros",
+    "close": "Cerrar",
+    "budget": {
+      "title": "Rango de Presupuesto",
+      "min": "Mín",
+      "max": "Máx"
+    },
+    "categories": {
+      "title": "Categorías",
+      "placeholder": "Buscar por código CPV o descripción...",
+      "searching": "Buscando...",
+      "noResults": "No se encontraron resultados"
+    },
+    "status": {
+      "title": "Estado",
+      "open": "Abierto",
+      "evaluation": "Evaluación",
+      "awarded": "Adjudicado",
+      "result": "Resultado"
+    },
+    "date": {
+      "title": "Rango de Fechas",
+      "from": "Desde",
+      "to": "Hasta",
+      "pickDate": "Seleccionar fecha"
+    },
+    "buttons": {
+      "apply": "Aplicar Filtros",
+      "reset": "Restablecer Filtros"
+    }
+  },
+  "tenderList": {
+    "allTenders": "Todas las Licitaciones",
+    "savedTenders": "Licitaciones Guardadas",
+    "noSavedTenders": "No hay licitaciones guardadas",
+    "saveTendersHint": "Guarda licitaciones haciendo clic en el icono de corazón en las tarjetas.",
+    "loadMore": "Cargar Más",
+    "loading": "Cargando...",
+    "loadingResults": "Cargando resultados...",
+    "loadingTenders": "Cargando tus licitaciones guardadas...",
+    "loadingDetails": "Cargando detalles de {count} licitaciones...",
+    "loadedProgress": "{loaded} de {total} cargadas",
+    "errorLoading": "Error al cargar las licitaciones",
+    "noResults": "No se encontraron licitaciones",
+    "noResultsDescription": "Intenta ajustar tu búsqueda o filtros para encontrar lo que estás buscando.",
+    "showing": "Mostrando",
+    "of": "de",
+    "tenders": "licitaciones",
+    "filters": "Filtros",
+    "clearFilters": "Limpiar todos los filtros",
+    "endOfResults": "Has llegado al final de la lista de licitaciones.",
+    "noMoreTenders": "No hay más licitaciones para cargar."
+  },
+  "tenderCard": {
+    "id": "ID",
+    "title": "Título",
+    "submit": "Fecha de Entrega",
+    "lots": "Lotes",
+    "organization": "Organización",
+    "budget": "Presupuesto",
+    "location": "Ubicación",
+    "type": "Tipo",
+    "category": "Categoría",
+    "status": "Estado",
+    "more": "más",
+    "loading": "Cargando",
+    "untitled": "Licitación sin título",
+    "noDescription": "Sin descripción disponible",
+    "unknown": "Desconocido",
+    "notSpecified": "No especificado",
+    "contract": "Tipo de Contrato",
+    "categories": "Categorías",
+    "open": "Abierto",
+    "contractTypes": {
+      "works": "Obras",
+      "supplies": "Suministros",
+      "services": "Servicios",
+      "mixed": "Mixto",
+      "other": "Otro"
+    }
+  },
+  "tenderResults": {
+    "columns": {
+      "id": "ID",
+      "title": "Título",
+      "submitOn": "Fecha de Entrega",
+      "lots": "Lotes",
+      "organization": "Organización",
+      "budget": "Presupuesto",
+      "location": "Ubicación",
+      "type": "Tipo",
+      "category": "Categoría"
+    }
+  }
+}

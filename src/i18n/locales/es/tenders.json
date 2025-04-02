@@ -1,0 +1,142 @@
+{
+  "overview": {
+    "title": "Licitaciones Disponibles",
+    "subtitle": "Explora y encuentra licitaciones que coincidan con la experiencia de tu empresa",
+    "filter": {
+      "title": "Filtrar Licitaciones",
+      "category": "Categoría",
+      "location": "Ubicación",
+      "budget": "Rango de Presupuesto",
+      "deadline": "Fecha Límite",
+      "apply": "Aplicar Filtros",
+      "clear": "Limpiar Filtros",
+      "noResults": "No se encontraron licitaciones que coincidan con tus filtros"
+    }
+  },
+  "savedTenders": {
+    "title": "Mis Licitaciones",
+    "subtitle": "Administra licitaciones que has guardado o en las que estás interesado",
+    "emptyState": "Aún no has guardado ninguna licitación",
+    "tabs": {
+      "all": "Todas",
+      "saved": "Guardadas",
+      "inProgress": "En Progreso",
+      "submitted": "Enviadas"
+    }
+  },
+  "tenderDetail": {
+    "title": "Detalles de la Licitación",
+    "backToTenders": "Volver a licitaciones",
+    "deadline": "Fecha Límite",
+    "budget": "Presupuesto",
+    "location": "Ubicación",
+    "category": "Categoría",
+    "description": "Descripción",
+    "requirements": "Requisitos",
+    "documents": "Documentos",
+    "contactInfo": "Información de Contacto",
+    "cpvCode": "CPV",
+    "loading": "Cargando detalles de la licitación...",
+    "errorTitle": "Error",
+    "error": "Error",
+    "errorTogglingSave": "Ocurrió un error al actualizar tus licitaciones guardadas.",
+    "saved": "Licitación Guardada",
+    "savedMessage": "Esta licitación ha sido añadida a tus licitaciones guardadas.",
+    "unsaved": "Licitación Eliminada",
+    "unsavedMessage": "Esta licitación ha sido eliminada de tus licitaciones guardadas.",
+    "identifier": "ID de Licitación",
+    "estimatedValue": "Valor Estimado",
+    "netValue": "Valor Neto",
+    "grossValue": "Valor Bruto",
+    "contractPeriod": "Período del Contrato",
+    "plannedPeriod": "Período Planeado",
+    "organizationName": "Nombre de la Organización",
+    "taxIdentifier": "Identificador Fiscal",
+    "address": "Dirección",
+    "contactPerson": "Persona de Contacto",
+    "email": "Correo Electrónico",
+    "telephone": "Teléfono",
+    "geographicArea": "Área Geográfica",
+    "country": "País",
+    "nutsCode": "Código NUTS",
+    "contractType": "Tipo de Contrato",
+    "additionalClassifications": "Clasificaciones Adicionales",
+    "categories": "Categorías",
+    "lot": "Lote",
+    "value": "Valor",
+    "cpvCodes": "Códigos CPV",
+    "additionalInformation": "Información Adicional",
+    "sections": {
+      "basicDetails": "Detalles Básicos",
+      "financialInfo": "Información Financiera",
+      "timeline": "Cronología y Períodos",
+      "organizationInfo": "Información de la Organización",
+      "locationInfo": "Información de Ubicación",
+      "contractTerms": "Términos del Contrato",
+      "classifications": "Clasificaciones",
+      "lots": "Lotes"
+    },
+    "actions": {
+      "save": "Guardar Licitación",
+      "unsave": "Eliminar de Guardadas",
+      "apply": "Aplicar a Licitación",
+      "share": "Compartir"
+    },
+    "status": {
+      "open": "Abierta",
+      "closing": "Cierra Pronto",
+      "closed": "Cerrada",
+      "awarded": "Adjudicada",
+      "canceled": "Cancelada"
+    }
+  },
+  "tenderCard": {
+    "deadline": "Fecha Límite",
+    "budget": "Presupuesto",
+    "location": "Ubicación",
+    "viewDetails": "Ver Detalles",
+    "contractTypes": {
+      "works": "Obras",
+      "supplies": "Suministros",
+      "services": "Servicios",
+      "mixed": "Mixto",
+      "other": "Otros"
+    }
+  },
+  "status": {
+    "open": "Abierta",
+    "closed": "Cerrada",
+    "under review": "En Revisión",
+    "awarded": "Adjudicada",
+    "canceled": "Cancelada"
+  },
+  "tabs": {
+    "details": "Detalles de la Licitación",
+    "aiDocument": "Documento IA"
+  },
+  "aiSummary": {
+    "title": "Resumen Generado por IA",
+    "notAvailable": "No hay resumen IA disponible aún. Guarda esta licitación para generar uno.",
+    "requested": "Resumen IA Solicitado",
+    "generating": "Estamos generando un resumen IA para esta licitación. Por favor, vuelve más tarde.",
+    "requestFailed": "Solicitud Fallida",
+    "requestFailedDescription": "Error al solicitar el resumen IA. Por favor, inténtalo de nuevo más tarde."
+  },
+  "aiDocument": {
+    "title": "Documento Generado por IA",
+    "view": "Ver Documento Generado por IA",
+    "loading": "Cargando documento...",
+    "errorLoading": "Error al cargar el contenido del documento IA. Por favor, inténtalo de nuevo más tarde.",
+    "saved": "Documento Guardado",
+    "savedMessage": "El documento IA se ha guardado correctamente.",
+    "error": "Error al Guardar",
+    "errorSaving": "Ocurrió un error al guardar el documento IA."
+  },
+  "common": {
+    "download": "Descargar",
+    "notSpecified": "No especificado",
+    "noDescriptionProvided": "Sin descripción disponible",
+    "untitled": "Sin título",
+    "months": "meses"
+  }
+} 

@@ -1,0 +1,16 @@
+{
+  "logo": "Gober.",
+  "navigation": {
+    "overview": "Overview",
+    "myTenders": "My Tenders",
+    "search": "Search",
+    "myTasks": "My Tasks",
+    "otherCompetitors": "Other Competitors",
+    "settings": "Settings"
+  },
+  "userActions": {
+    "userSettings": "User settings",
+    "logout": "Logout",
+    "toggleMenu": "Toggle menu"
+  }
+} 

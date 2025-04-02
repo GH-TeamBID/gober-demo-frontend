@@ -1,0 +1,142 @@
+{
+  "overview": {
+    "title": "Available Tenders",
+    "subtitle": "Browse and find tenders that match your company's expertise",
+    "filter": {
+      "title": "Filter Tenders",
+      "category": "Category",
+      "location": "Location",
+      "budget": "Budget Range",
+      "deadline": "Deadline",
+      "apply": "Apply Filters",
+      "clear": "Clear Filters",
+      "noResults": "No tenders found matching your filters"
+    }
+  },
+  "savedTenders": {
+    "title": "My Tenders",
+    "subtitle": "Manage tenders you have saved or are interested in",
+    "emptyState": "You haven't saved any tenders yet",
+    "tabs": {
+      "all": "All",
+      "saved": "Saved",
+      "inProgress": "In Progress",
+      "submitted": "Submitted"
+    }
+  },
+  "tenderDetail": {
+    "title": "Tender Details",
+    "backToTenders": "Back to tenders",
+    "deadline": "Deadline",
+    "budget": "Budget",
+    "location": "Location",
+    "category": "Category",
+    "description": "Description",
+    "requirements": "Requirements",
+    "documents": "Documents",
+    "contactInfo": "Contact Information",
+    "cpvCode": "CPV",
+    "loading": "Loading tender details...",
+    "errorTitle": "Error",
+    "error": "Error",
+    "errorTogglingSave": "An error occurred while updating your saved tenders.",
+    "saved": "Tender Saved",
+    "savedMessage": "This tender has been added to your saved tenders.",
+    "unsaved": "Tender Unsaved",
+    "unsavedMessage": "This tender has been removed from your saved tenders.",
+    "identifier": "Tender ID",
+    "estimatedValue": "Estimated Value",
+    "netValue": "Net Value",
+    "grossValue": "Gross Value",
+    "contractPeriod": "Contract Period",
+    "plannedPeriod": "Planned Period",
+    "organizationName": "Organization Name",
+    "taxIdentifier": "Tax Identifier",
+    "address": "Address",
+    "contactPerson": "Contact Person",
+    "email": "Email",
+    "telephone": "Telephone",
+    "geographicArea": "Geographic Area",
+    "country": "Country",
+    "nutsCode": "NUTS Code",
+    "contractType": "Contract Type",
+    "additionalClassifications": "Additional Classifications",
+    "categories": "Categories",
+    "lot": "Lot",
+    "value": "Value",
+    "cpvCodes": "CPV Codes",
+    "additionalInformation": "Additional Information",
+    "sections": {
+      "basicDetails": "Basic Details",
+      "financialInfo": "Financial Information",
+      "timeline": "Timeline & Periods",
+      "organizationInfo": "Organization Information",
+      "locationInfo": "Location Information",
+      "contractTerms": "Contract Terms",
+      "classifications": "Classifications",
+      "lots": "Lots"
+    },
+    "actions": {
+      "save": "Save Tender",
+      "unsave": "Remove from Saved",
+      "apply": "Apply for Tender",
+      "share": "Share"
+    },
+    "status": {
+      "open": "Open",
+      "closing": "Closing Soon",
+      "closed": "Closed",
+      "awarded": "Awarded",
+      "canceled": "Canceled"
+    }
+  },
+  "tenderCard": {
+    "deadline": "Deadline",
+    "budget": "Budget",
+    "location": "Location",
+    "viewDetails": "View Details",
+    "contractTypes": {
+      "works": "Works",
+      "supplies": "Supplies",
+      "services": "Services",
+      "mixed": "Mixed",
+      "other": "Other"
+    }
+  },
+  "status": {
+    "open": "Open",
+    "closed": "Closed",
+    "under review": "Under Review",
+    "awarded": "Awarded",
+    "canceled": "Canceled"
+  },
+  "tabs": {
+    "details": "Tender Details",
+    "aiDocument": "AI Document"
+  },
+  "aiSummary": {
+    "title": "AI-Generated Summary",
+    "notAvailable": "No AI summary available yet. Save this tender to generate one.",
+    "requested": "AI Summary Requested",
+    "generating": "We're generating an AI summary for this tender. Please check back later.",
+    "requestFailed": "Request Failed",
+    "requestFailedDescription": "Failed to request AI summary. Please try again later."
+  },
+  "aiDocument": {
+    "title": "AI-Generated Document",
+    "view": "View AI-Generated Document",
+    "loading": "Loading document...",
+    "errorLoading": "Error loading AI document content. Please try again later.",
+    "saved": "Document Saved",
+    "savedMessage": "The AI document has been saved successfully.",
+    "error": "Save Error",
+    "errorSaving": "An error occurred while saving the AI document."
+  },
+  "common": {
+    "download": "Download",
+    "notSpecified": "Not specified",
+    "noDescriptionProvided": "No description provided",
+    "untitled": "Untitled",
+    "months": "months"
+  }
+} 

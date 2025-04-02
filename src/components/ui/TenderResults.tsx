@@ -4,6 +4,7 @@ import { SortField, SortState } from '@/types/types';
 import { TenderPreview } from '@/services/tenderService';
 import TenderCard from './TenderCard';
 import { ArrowUp, ArrowDown, Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 interface TenderResultsProps {
   tenders: TenderPreview[];
@@ -15,6 +16,7 @@ interface TenderResultsProps {
   onLoadMore: () => void;
   hasMore?: boolean;
 }
+
 const TenderResults = ({
   tenders,
   isLoading,
@@ -25,6 +27,8 @@ const TenderResults = ({
   onLoadMore,
   hasMore = false
 }: TenderResultsProps) => {
+  const { t } = useTranslation('ui');
+  
   // Convert array to Set for O(1) lookups
   const savedIdsSet = new Set(savedTenderIds);
   
@@ -41,10 +45,12 @@ const TenderResults = ({
       direction
     });
   };
+  
   const getSortIcon = (field: SortField) => {
     if (sort.field !== field) return null;
     return sort.direction === 'asc' ? <ArrowUp className="h-4 w-4 ml-1" /> : <ArrowDown className="h-4 w-4 ml-1" />;
   };
+  
   const getColumnHeaderClass = (field: SortField) => {
     return `text-xs font-medium cursor-pointer hover:text-gober-accent-500 flex items-center ${sort.field === field ? 'text-gober-accent-500' : 'text-gray-600 dark:text-gray-400'}`;
   };
@@ -75,59 +81,60 @@ const TenderResults = ({
   
   if (tenders.length === 0) {
     return <div className="flex flex-col items-center justify-center py-16 text-center">
-        <div className="text-lg font-medium mb-2">No tenders found</div>
+        <div className="text-lg font-medium mb-2">{t('tenderList.noResults')}</div>
         <p className="text-gray-600 dark:text-gray-400 max-w-md">
-          Try adjusting your search or filters to find what you're looking for.
+          {t('tenderList.noResultsDescription')}
         </p>
       </div>;
   }
+  
   return <>
       {/* Column Headers */}
       <div className="hidden md:grid grid-cols-12 gap-4 px-4 bg-gray-50 dark:bg-gober-primary-800/50 rounded-t-lg mb-1 py-[14px] text-bold">
         {/* ID */}
         <div className="col-span-2 sm:col-span-1 flex items-center">
-          <SortableHeader field="tender_id">ID</SortableHeader>
+          <SortableHeader field="tender_id">{t('tenderResults.columns.id')}</SortableHeader>
         </div>
         
         {/* Title - reduced width */}
         <div className="col-span-10 sm:col-span-4 md:col-span-3 flex items-center">
-          <SortableHeader field="title">Title</SortableHeader>
+          <SortableHeader field="title">{t('tenderResults.columns.title')}</SortableHeader>
         </div>
         
         {/* Submit On */}
         <div className="col-span-4 sm:col-span-2 md:col-span-1 flex items-center">
-          <SortableHeader field="submission_date">Submit On</SortableHeader>
+          <SortableHeader field="submission_date">{t('tenderResults.columns.submitOn')}</SortableHeader>
         </div>
         
         {/* Lots - make sortable */}
         <div className="col-span-4 sm:col-span-1 md:col-span-1 flex items-center">
-          <SortableHeader field="n_lots">Lots</SortableHeader>
+          <SortableHeader field="n_lots">{t('tenderResults.columns.lots')}</SortableHeader>
         </div>
         
         {/* Organization - make sortable */}
         <div className="col-span-4 sm:col-span-4 md:col-span-2 flex items-center">
-          <SortableHeader field="pub_org_name">Organization</SortableHeader>
+          <SortableHeader field="pub_org_name">{t('tenderResults.columns.organization')}</SortableHeader>
         </div>
         
         {/* Budget */}
         <div className="col-span-4 sm:col-span-2 md:col-span-1 flex items-center">
-          <SortableHeader field="budget.amount">Budget</SortableHeader>
+          <SortableHeader field="budget.amount">{t('tenderResults.columns.budget')}</SortableHeader>
         </div>
         
         {/* Location - make sortable */}
         <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:flex md:items-center">
-          <SortableHeader field="location">Location</SortableHeader>
+          <SortableHeader field="location">{t('tenderResults.columns.location')}</SortableHeader>
         </div>
         
         {/* Contract Type - make sortable */}
         <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:flex md:items-center">
-          <SortableHeader field="contract_type">Type</SortableHeader>
+          <SortableHeader field="contract_type">{t('tenderResults.columns.type')}</SortableHeader>
         </div>
         
         {/* Category */}
         <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:flex lg:items-center">
           <span className={nonSortableHeaderClass}>
-            Category
+            {t('tenderResults.columns.category')}
           </span>
         </div>
       </div>
@@ -165,17 +172,16 @@ const TenderResults = ({
             // Call the provided onLoadMore function
             onLoadMore();
           }}
-          disabled={isLoading} // Only disable when loading, not based on hasMore
+          disabled={isLoading}
         >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Loading...
+              {t('tenderList.loading')}
             </>
           ) : (
             <>
-              Load More
-              {/* Show the tender count for debugging */}
+              {t('tenderList.loadMore')}
               <span className="ml-2 text-xs text-gray-400">({tenders.length})</span>
             </>
           )}
@@ -183,4 +189,5 @@ const TenderResults = ({
       </div>
     </>;
 };
+
 export default TenderResults;

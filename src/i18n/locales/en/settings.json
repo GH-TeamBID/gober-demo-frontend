@@ -1,0 +1,88 @@
+{
+  "page": {
+    "title": "Settings",
+    "menu": "Settings Menu"
+  },
+  "tabs": {
+    "password": "Password",
+    "users": "Users",
+    "criteria": "Search Criteria"
+  },
+  "components": {
+    "passwordSettings": {
+      "title": "Change Password",
+      "currentPassword": "Current Password",
+      "newPassword": "New Password",
+      "confirmPassword": "Confirm Password",
+      "requirements": "Password must be at least 8 characters and include a mix of letters, numbers, and symbols.",
+      "submitButton": "Update Password",
+      "success": "Password updated successfully!",
+      "errors": {
+        "currentPasswordRequired": "Current password is required",
+        "newPasswordRequired": "New password is required",
+        "passwordsMustMatch": "Passwords must match",
+        "passwordTooWeak": "Password is too weak",
+        "currentPasswordIncorrect": "Current password is incorrect",
+        "generalError": "An error occurred. Please try again."
+      }
+    },
+    "usersList": {
+      "title": "Manage Users",
+      "addUserButton": "Add User",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "actions": {
+        "edit": "Edit",
+        "delete": "Delete",
+        "activate": "Activate",
+        "deactivate": "Deactivate"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "confirmDelete": "Are you sure you want to delete this user?"
+    },
+    "searchCriteria": {
+      "title": "Search Criteria Settings",
+      "description": "Configure your default search criteria for tenders",
+      "saveButton": "Save Settings",
+      "defaultFilters": "Default Filters",
+      "defaultSorting": "Default Sorting",
+      "emailNotifications": "Email Notifications",
+      "notifications": {
+        "title": "Notifications",
+        "newTenders": "New tenders matching criteria",
+        "deadlineApproaching": "Tender deadline approaching",
+        "statusChanges": "Tender status changes"
+      },
+      "cpvCodes": "CPV Codes",
+      "keywords": "Keywords",
+      "keywordPlaceholder": "Type a keyword and press Enter...",
+      "contractTypes": "Contract Types",
+      "selectContractType": "Select contract type",
+      "loading": "Loading criteria...",
+      "saving": "Saving...",
+      "languageToggle": "Toggle language",
+      "errors": {
+        "userIdentity": "Could not determine user identity. Please log in again.",
+        "loadingCriteria": "Error loading search criteria. Please try again later.",
+        "saveCriteria": "Error saving criteria. Please try again later."
+      },
+      "success": {
+        "title": "Criteria saved",
+        "message": "Your search criteria have been saved successfully."
+      }
+    },
+    "common": {
+      "error": "Error",
+      "english": "English",
+      "spanish": "Español"
+    }
+  }
+} 
