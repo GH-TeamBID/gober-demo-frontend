@@ -185,12 +185,13 @@ export interface PaginatedTenderResponse {
   size: number;
   has_next: boolean;
   has_prev: boolean;
+  debug?: any; // Optional debug information returned by the server
 }
 
 export interface TenderParams {
   page?: number;
   size?: number;
-  search?: string;
+  match?: string;
   sort_field?: string;
   sort_direction?: 'asc' | 'desc';
   // Update types to match expected types
@@ -223,40 +224,170 @@ export interface UserTender {
  */
 export async function fetchTenders(params: TenderParams = {}): Promise<PaginatedTenderResponse> {
   try {
-    console.log('Fetching tenders with params:', params);
+    console.log('📡 NETWORK: fetchTenders called with params:', JSON.stringify(params, null, 2));
     
     // Create a clean object with only defined parameters
     const apiParams: Record<string, any> = {};
     
-    // Only add parameters that are defined
-    Object.entries(params).forEach(([key, value]) => {
-      // Skip undefined, null, empty arrays, and empty strings
-      if (value === undefined || value === null) return;
-      if (Array.isArray(value) && value.length === 0) return;
-      if (value === '') return;
-      
-      // For arrays, we need to convert them to the format expected by the API
-      if (Array.isArray(value)) {
-        // Many APIs expect repeated parameters like ?category=A&category=B
-        // If your API expects comma-separated values like ?category=A,B
-        // then uncomment the following line instead:
-        // apiParams[key] = value.join(',');
+    // Extract pagination, search and sorting - these stay as regular query params
+    if (params.page !== undefined) apiParams.page = params.page;
+    if (params.size !== undefined) apiParams.size = params.size;
+    if (params.match !== undefined && params.match !== '') apiParams.match = params.match;
+    if (params.sort_field !== undefined) apiParams.sort_field = params.sort_field;
+    if (params.sort_direction !== undefined) apiParams.sort_direction = params.sort_direction;
+    
+    // Format filters for MeiliSearch - currently disabled but prepared for future use
+    const filtersForMeili: Array<{name: string, value: any, operator?: string, expression?: string}> = [];
+    
+    // Add category filters
+    if (params.categories && params.categories.length > 0) {
+      params.categories.forEach(category => {
+        // Extract code from category string if in format "code - description"
+        const code = category.includes(' - ') 
+          ? category.split(' - ')[0].trim() 
+          : category;
         
-        // For repeated parameters (most common)
-        apiParams[key] = value;
-      } else {
-        apiParams[key] = value;
-      }
-    });
+        filtersForMeili.push({
+          name: 'category', // Backend uses 'category' not 'cpv_categories'
+          value: code,
+          operator: '=',
+          expression: 'AND'
+        });
+      });
+    }
+    
+    // Add location filters
+    if (params.states && params.states.length > 0) {
+      params.states.forEach(state => {
+        filtersForMeili.push({
+          name: 'location',
+          value: state,
+          operator: '=',
+          expression: 'AND'
+        });
+      });
+    }
+    
+    // Add status filters
+    if (params.status && params.status.length > 0) {
+      params.status.forEach(status => {
+        filtersForMeili.push({
+          name: 'status',
+          value: status,
+          operator: '=',
+          expression: 'AND'
+        });
+      });
+    }
+    
+    // Add date range filters - using TO operator for ranges
+    if (params.date_from && params.date_to) {
+      filtersForMeili.push({
+        name: 'submission_date',
+        value: [params.date_from, params.date_to],
+        operator: 'TO',
+        expression: 'AND'
+      });
+    } else if (params.date_from) {
+      filtersForMeili.push({
+        name: 'submission_date',
+        value: params.date_from,
+        operator: '>=',
+        expression: 'AND'
+      });
+    } else if (params.date_to) {
+      filtersForMeili.push({
+        name: 'submission_date',
+        value: params.date_to,
+        operator: '<=',
+        expression: 'AND'
+      });
+    }
+    
+    // Add budget range filters
+    if (params.budget_min !== undefined && params.budget_min > 0) {
+      filtersForMeili.push({
+        name: 'budget.amount',
+        value: params.budget_min,
+        operator: '>=',
+        expression: 'AND'
+      });
+    }
+    if (params.budget_max !== undefined && params.budget_max < 10000000) {
+      filtersForMeili.push({
+        name: 'budget.amount',
+        value: params.budget_max,
+        operator: '<=',
+        expression: 'AND'
+      });
+    }
+    
+    // Only add filters parameter if we have any filters
+    if (filtersForMeili.length > 0) {
+      console.log('Prepared MeiliSearch filters (currently disabled):', filtersForMeili);
+      
+      // Add the filters in JSON format as a single string parameter to avoid arrays
+      // which can cause problems with some HTTP clients
+      apiParams.filters_json = JSON.stringify(filtersForMeili);
+      
+      // Keep this commented out until the backend is ready:
+      // apiParams.filters = filtersForMeili;
+      
+      // Add simple debug flag to see what's happening in the backend logs
+      apiParams.debug = true;
+    }
     
     // Add debugging to see exactly what's being sent to the API
     console.log('Clean API params being sent:', apiParams);
     
     try {
-      // Send the clean params to the API
-      const response = await apiClient.get<PaginatedTenderResponse>('/tenders', { params: apiParams });
+      // Create a URL string manually to ensure parameters are properly formatted
+      let url = '/tenders';
       
-      console.log(`Fetched ${response.data.items.length} tenders from API`);
+      // Convert apiParams to URLSearchParams for proper encoding
+      const searchParams = new URLSearchParams();
+      
+      // Add all parameters to URLSearchParams
+      Object.entries(apiParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          if (Array.isArray(value)) {
+            // For arrays, add each value separately with the same key
+            value.forEach(item => searchParams.append(key, item.toString()));
+          } else if (typeof value === 'object') {
+            // For objects, stringify them
+            searchParams.append(key, JSON.stringify(value));
+          } else {
+            // For primitive values
+            searchParams.append(key, value.toString());
+          }
+        }
+      });
+      
+      // Get the query string
+      const queryString = searchParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+      
+      console.log('📡 NETWORK: Making API request to:', url);
+      
+      // Make the API request
+      console.time('🕒 API Request Time');
+      const response = await apiClient.get<PaginatedTenderResponse>(url);
+      console.timeEnd('🕒 API Request Time');
+      
+      console.log(`📡 NETWORK: Fetched ${response.data.items.length} tenders from API. Response:`, {
+        items: response.data.items.length,
+        total: response.data.total,
+        page: response.data.page,
+        size: response.data.size,
+        has_next: response.data.has_next,
+        has_prev: response.data.has_prev
+      });
+      
+      if (response.data.debug) {
+        console.log('📡 NETWORK: Debug info from API:', response.data.debug);
+      }
       
       return response.data;
     } catch (apiError) {

@@ -1,5 +1,4 @@
-
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -8,18 +7,54 @@ interface SearchBarProps {
   value: string;
   onSearch: (query: string) => void;
   placeholder?: string;
+  autoSearchDelay?: number;
 }
 
 const SearchBar = ({
   value,
   onSearch,
   placeholder = 'Search by tender name, ID, category, or keyword',
+  autoSearchDelay = 500,
 }: SearchBarProps) => {
   const [inputValue, setInputValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Set initial value when prop changes
+  useEffect(() => {
+    setInputValue(value);
+  }, [value]);
+
+  // Auto-search after typing stops (debounce)
+  useEffect(() => {
+    // Only trigger search if value has changed from prop
+    if (inputValue !== value) {
+      // Clear any existing timeout
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+      
+      // Set a new timeout
+      searchTimeoutRef.current = setTimeout(() => {
+        onSearch(inputValue);
+      }, autoSearchDelay);
+    }
+    
+    // Cleanup function
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, [inputValue, value, onSearch, autoSearchDelay]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Clear any pending timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    // Apply search immediately
     onSearch(inputValue);
   };
 
@@ -29,6 +64,11 @@ const SearchBar = ({
 
   const handleClear = () => {
     setInputValue('');
+    // Clear any pending timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+    // Apply empty search immediately
     onSearch('');
     inputRef.current?.focus();
   };

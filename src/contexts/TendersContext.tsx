@@ -88,7 +88,15 @@ export function TendersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
+      console.log('Initial fetch with params:', queryParams);
       const response = await fetchTenders(queryParams);
+      console.log('API response:', {
+        items: response.items.length,
+        total: response.total,
+        page: response.page,
+        size: response.size,
+        has_next: response.has_next
+      });
       
       // No processing needed - use data directly
       if (params?.page === 1 || queryParams.page === 1) {
@@ -100,7 +108,12 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       setTotalTenders(response.total);
       setCurrentPage(response.page);
       setPageSize(response.size);
-      setHasMore(response.has_next);
+      
+      // Determine if there are more items to load
+      // Set hasMore based on the API's response, but also check if total > currently loaded
+      const hasMoreItems = response.has_next || (response.total > (response.page * response.size));
+      console.log(`Setting hasMore=${hasMoreItems} based on response.has_next=${response.has_next} and total check=${response.total > (response.page * response.size)}`);
+      setHasMore(hasMoreItems);
       
       // Update current params
       setCurrentParams({
@@ -123,31 +136,88 @@ export function TendersProvider({ children }: { children: ReactNode }) {
   
   // Function to load more tenders (append next page)
   const loadMore = async () => {
-    if (!hasMore || isLoading) return;
+    console.log('🚀 CONTEXT: loadMore called with hasMore:', hasMore, 'isLoading:', isLoading);
+    
+    // Always check if total items is greater than currently loaded items
+    const currentlyLoadedItems = tenders.length;
+    const totalAvailableItems = totalTenders;
+    const hasMoreBasedOnTotal = totalAvailableItems > currentlyLoadedItems;
+    
+    console.log(`🚀 CONTEXT: Currently loaded: ${currentlyLoadedItems}, Total available: ${totalAvailableItems}`);
+    console.log(`🚀 CONTEXT: hasMore from state: ${hasMore}, hasMore based on counts: ${hasMoreBasedOnTotal}`);
+    
+    if (!hasMore && !hasMoreBasedOnTotal) {
+      console.log('🚀 CONTEXT: No more tenders to load, returning early');
+      return;
+    }
+    
+    if (isLoading) {
+      console.log('🚀 CONTEXT: Already loading tenders, returning early');
+      return;
+    }
     
     setIsLoading(true);
     setError(null);
     
     try {
       const nextPage = currentPage + 1;
+      console.log('🚀 CONTEXT: Loading more tenders for page:', nextPage);
       
-      const response = await fetchTenders({
+      // Explicitly create the params for the next page request
+      const nextPageParams = {
         ...currentParams,
         page: nextPage
+      };
+      
+      console.log('🚀 CONTEXT: Fetching next page with params:', nextPageParams);
+      
+      const response = await fetchTenders(nextPageParams);
+      
+      console.log('🚀 CONTEXT: Received response for page', nextPage, 'with', response.items.length, 'items');
+      console.log('🚀 CONTEXT: API response details:', {
+        items: response.items.length,
+        total: response.total,
+        page: response.page,
+        size: response.size,
+        has_next: response.has_next
       });
       
+      if (response.items.length === 0) {
+        console.log('🚀 CONTEXT: Received empty page, no more results available');
+        setHasMore(false);
+        toast({
+          title: "End of results",
+          description: "No more tenders to load.",
+          duration: 3000,
+        });
+        setIsLoading(false);
+        return;
+      }
+      
       // Append new items to existing tenders
-      setTenders(prev => [...prev, ...response.items]);
+      const currentTenders = [...tenders]; // Create a copy of current tenders
+      const combinedTenders = [...currentTenders, ...response.items];
+      setTenders(combinedTenders);
+      
       setTotalTenders(response.total);
       setCurrentPage(response.page);
       setPageSize(response.size);
-      setHasMore(response.has_next);
+      
+      // FIXED: Calculate using our local copy rather than the state which hasn't updated yet
+      const updatedTotal = response.total;
+      const updatedLoaded = combinedTenders.length; // Use the combined array length instead of tenders.length + response.items.length
+      const updatedHasMore = response.has_next || (updatedTotal > updatedLoaded);
+      
+      console.log(`🚀 CONTEXT: After load more: Loaded ${updatedLoaded} of ${updatedTotal} items`);
+      console.log(`🚀 CONTEXT: Setting hasMore=${updatedHasMore} based on API has_next=${response.has_next} and count check=${updatedTotal > updatedLoaded}`);
+      
+      setHasMore(updatedHasMore);
       
       // Notify user if no more results
-      if (!response.has_next && response.items.length === 0) {
+      if (!updatedHasMore) {
         toast({
           title: "End of results",
-          description: "There are no more tenders to load.",
+          description: "You've reached the end of the tender list.",
           duration: 3000,
         });
       }
@@ -159,6 +229,7 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       }));
       
     } catch (err: any) {
+      console.error('🚀 CONTEXT: Error loading more tenders:', err);
       setError(err.message || 'Failed to load more tenders');
       toast({
         title: "Error",

@@ -2,14 +2,15 @@ import { useState, useEffect } from 'react';
 import { FilterState } from '../types/types';
 import { TenderPreview } from '../services/tenderService';
 
-type TenderTypes = TenderPreview;
-
 /**
  * Custom hook for filtering tenders based on multiple criteria
+ * When useApiFiltering=true, this hook only tracks filter state but doesn't perform filtering
+ * When useApiFiltering=false, it performs client-side filtering (fallback)
  */
 export function useTenderFilter(
-  tenders: TenderTypes[],
-  searchQuery: string
+  tenders: TenderPreview[],
+  searchQuery: string,
+  useApiFiltering: boolean = true // Default to server-side filtering
 ) {
   // Default filter state
   const [filters, setFilters] = useState<FilterState>({
@@ -20,12 +21,19 @@ export function useTenderFilter(
     budgetRange: [0, 10000000],
   });
 
-  // The filtered tenders
-  const [filteredTenders, setFilteredTenders] = useState<TenderPreview[]>(tenders as TenderPreview[]);
+  // The filtered tenders - if using API, this will just be the passed tenders
+  const [filteredTenders, setFilteredTenders] = useState<TenderPreview[]>(tenders);
 
   // Effect to apply filters when any filter criteria changes
   useEffect(() => {
-    let result = [...tenders] as TenderPreview[];
+    // If using API for filtering, don't filter client-side
+    if (useApiFiltering) {
+      setFilteredTenders(tenders);
+      return;
+    }
+    
+    // Only do client-side filtering if not using API filtering
+    let result = [...tenders];
 
     // Apply search query filter
     if (searchQuery.trim()) {
@@ -42,9 +50,13 @@ export function useTenderFilter(
     if (filters.categories.length > 0) {
       result = result.filter((tender) =>
         tender.cpv_categories && tender.cpv_categories.length > 0 ? 
-        filters.categories.some(cat => 
-          tender.cpv_categories?.includes(cat)
-        ) : false
+        filters.categories.some(cat => {
+          // Extract code from "code - description" format if needed
+          const code = cat.includes(' - ') ? cat.split(' - ')[0].trim() : cat;
+          return tender.cpv_categories?.some(tenderCat => 
+            tenderCat.includes(code) || tenderCat === cat
+          );
+        }) : false
       );
     }
 
@@ -58,9 +70,9 @@ export function useTenderFilter(
 
     // Apply status filter
     if (filters.status.length > 0) {
-      // Since we don't have real status data yet, default all to "Open"
-      result = result.filter(() => 
-        filters.status.includes('Open')
+      result = result.filter((tender) =>
+        tender.status ? 
+        filters.status.includes(tender.status) : false
       );
     }
 
@@ -72,12 +84,18 @@ export function useTenderFilter(
         const tenderDate = new Date(tender.submission_date);
         
         if (filters.dateRange.from) {
-          const fromDate = new Date(filters.dateRange.from);
+          const fromDate = typeof filters.dateRange.from === 'string' 
+            ? new Date(filters.dateRange.from) 
+            : filters.dateRange.from;
+            
           if (tenderDate < fromDate) return false;
         }
         
         if (filters.dateRange.to) {
-          const toDate = new Date(filters.dateRange.to);
+          const toDate = typeof filters.dateRange.to === 'string' 
+            ? new Date(filters.dateRange.to) 
+            : filters.dateRange.to;
+            
           if (tenderDate > toDate) return false;
         }
         
@@ -100,7 +118,7 @@ export function useTenderFilter(
     }
 
     setFilteredTenders(result);
-  }, [tenders, searchQuery, filters]);
+  }, [tenders, searchQuery, filters, useApiFiltering]);
 
   return { filters, setFilters, filteredTenders };
 } 

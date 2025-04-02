@@ -201,7 +201,12 @@ const FilterPanel = ({
   };
   
   const handleApply = () => {
+    console.log('FilterPanel: Apply button clicked');
+    console.log('FilterPanel: Current filter state:', JSON.stringify(localFilters, null, 2));
+    
+    // Apply the filters
     onApplyFilters(localFilters);
+    console.log('FilterPanel: onApplyFilters called, closing panel');
     onClose();
   };
   

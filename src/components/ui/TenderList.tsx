@@ -7,7 +7,7 @@ import FilterPanel from './FilterPanel';
 import TenderResults from './TenderResults';
 import { useTenders } from '@/contexts/TendersContext';
 import TenderCard from './TenderCard';
-import { TenderPreview, fetchTenders, TenderParams } from '@/services/tenderService';
+import { TenderPreview, TenderParams, fetchTenders } from '@/services/tenderService';
 import { useSavedTenders } from '@/hooks/useSavedTenders.tsx';
 import React from 'react';
 
@@ -88,7 +88,7 @@ const TenderList = ({
   const isLoading = isLoadingProp !== undefined ? isLoadingProp : contextIsLoading;
   const totalTenders = contextTotalTenders || baseTenders.length;
   const hasMore = contextHasMore || false;
-  const loadMore = contextLoadMore;
+  const loadMore = contextLoadMore || (() => Promise.resolve());
   const error = contextError;
   
   // Initialize saved tenders hook - this manages saved state via API
@@ -119,75 +119,135 @@ const TenderList = ({
   // Track loading state of loadMore
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   
-  // Add a state to manage our accumulated tenders
-  const [accumulatedTenders, setAccumulatedTenders] = useState<TenderPreview[]>([]);
-  const [nextOffset, setNextOffset] = useState(1); // Start with page 1 for the next request
+  // Store local copy of tenders to handle pagination directly
+  const [localTenders, setLocalTenders] = useState<TenderPreview[]>([]);
+  const [localCurrentPage, setLocalCurrentPage] = useState(1);
+  const [localHasMore, setLocalHasMore] = useState(true);
   
-  // Add a ref to track if we've initialized the tenders
-  // Using a ref instead of state prevents re-initialization during re-renders
-  const initializedRef = React.useRef(false);
-  
-  // Initialize accumulated tenders only once when base tenders are first loaded
+  // Sync local tenders with context tenders on initial load and when context changes
   useEffect(() => {
-    // Only initialize if we have base tenders and haven't initialized yet
-    if (baseTenders.length > 0 && !initializedRef.current && accumulatedTenders.length === 0) {
-      console.log('Initializing accumulated tenders with base tenders:', baseTenders.length);
-      setAccumulatedTenders(baseTenders);
-      setNextOffset(2); // Next fetch should be page 2
-      // Mark as initialized so we don't reinitialize on re-renders
-      initializedRef.current = true;
+    if (baseTenders.length > 0 && localTenders.length === 0) {
+      console.log('Initializing local tenders from context:', baseTenders.length);
+      setLocalTenders(baseTenders);
+      setLocalCurrentPage(contextParams.page || 1);
+      setLocalHasMore(hasMore);
     }
-  }, [baseTenders]); // Only depend on baseTenders
+  }, [baseTenders, contextParams.page, hasMore]);
   
-  // Modified load more function that appends to accumulated tenders
-  const handleLoadMore = async () => {
-    console.log('Load More button clicked, fetching next page directly');
-    console.log('Current accumulated tenders:', accumulatedTenders.length);
+  // Handle filter changes - uses server-side filtering via the API
+  const handleFilterChange = (newFilters: FilterState) => {
+    console.log('TenderList: handleFilterChange called with:', JSON.stringify(newFilters, null, 2));
     
+    // Update local filter state
+    setFilters(newFilters);
+    console.log('TenderList: Local filter state updated');
+    
+    // Call prop callback if provided
+    if (onFilter !== (() => {})) {
+      console.log('TenderList: Calling parent onFilter callback');
+      onFilter(newFilters);
+    }
+    
+    // Use updateParams from context to trigger server-side filtering
+    if (updateParams) {
+      console.log('TenderList: Using context API for filtering');
+      
+      // Map the local FilterState to the API's TenderParams format
+      const apiParams: Partial<TenderParams> = {
+        // Only include parameters that have values
+        categories: newFilters.categories.length > 0 ? newFilters.categories : undefined,
+        states: newFilters.states.length > 0 ? newFilters.states : undefined,
+        status: newFilters.status.length > 0 ? newFilters.status : undefined,
+        
+        // Convert Date objects to ISO strings for API
+        date_from: newFilters.dateRange.from ? 
+          (typeof newFilters.dateRange.from === 'string' ? 
+            newFilters.dateRange.from : 
+            new Date(newFilters.dateRange.from).toISOString()) 
+          : undefined,
+        
+        date_to: newFilters.dateRange.to ? 
+          (typeof newFilters.dateRange.to === 'string' ? 
+            newFilters.dateRange.to : 
+            new Date(newFilters.dateRange.to).toISOString()) 
+          : undefined,
+        
+        // Only include budget range if it differs from defaults
+        budget_min: newFilters.budgetRange[0] > 0 ? newFilters.budgetRange[0] : undefined,
+        budget_max: newFilters.budgetRange[1] < 10000000 ? newFilters.budgetRange[1] : undefined,
+        
+        // Always start with page 1 when changing filters
+        page: 1
+      };
+      
+      console.log('TenderList: Constructed API params:', JSON.stringify(apiParams, null, 2));
+      
+      // This will trigger a new API request with these parameters
+      console.log('TenderList: Calling updateParams to trigger API request');
+      updateParams(apiParams);
+    } else {
+      console.log('TenderList: WARNING - updateParams is not available');
+      console.log('TenderList: Check if this component is wrapped with TendersProvider');
+    }
+  };
+
+  // Modified load more function that directly handles pagination
+  const handleLoadMore = async () => {
+    console.log('🔍 LOAD MORE: handleLoadMore called in TenderList');
+    console.log('🔍 LOAD MORE: State - isLoadingMore:', isLoadingMore, 'localHasMore:', localHasMore);
+    
+    if (isLoadingMore) {
+      console.log('🔍 LOAD MORE: Already loading more data, returning early');
+      return;
+    }
+    
+    console.log('🔍 LOAD MORE: Setting isLoadingMore to true');
     setIsLoadingMore(true);
+    
     try {
-      const pageSize = contextParams.size || 10;
+      // FORCE A DIRECT API CALL
+      // This bypasses any issues with the context's loadMore function
+      console.log('🔍 LOAD MORE: Making direct API call regardless of context');
       
-      console.log(`Directly fetching page ${nextOffset} with size ${pageSize}`);
+      // Determine the next page from our local state
+      const nextPage = localCurrentPage + 1;
+      console.log(`🔍 LOAD MORE: Directly loading page ${nextPage}`);
       
-      // Call the API directly with the next page
       const response = await fetchTenders({
         ...contextParams,
-        page: nextOffset,
-        size: pageSize
+        page: nextPage
       });
       
-      console.log(`Fetched ${response.items.length} new items for page ${nextOffset}`);
+      console.log('🔍 LOAD MORE: Direct API call succeeded!', {
+        items: response.items.length,
+        total: response.total,
+        page: response.page,
+        has_next: response.has_next
+      });
       
+      // Update our local state with the new tenders
       if (response.items.length > 0) {
-        // Track existing tender IDs to prevent duplicates
-        const existingTenderIds = new Set(accumulatedTenders.map(t => t.tender_hash));
+        console.log('🔍 LOAD MORE: Appending', response.items.length, 'new items to existing', localTenders.length, 'items');
         
-        // Filter out any duplicates
-        const newUniqueItems = response.items.filter(item => !existingTenderIds.has(item.tender_hash));
+        // Combine existing tenders with new ones
+        const combined = [...localTenders, ...response.items];
+        setLocalTenders(combined);
         
-        console.log(`Adding ${newUniqueItems.length} unique new tenders to the list`);
+        // Update other local state
+        setLocalCurrentPage(nextPage);
+        setLocalHasMore(response.has_next);
         
-        // Append new items to our accumulated list (at the bottom)
-        setAccumulatedTenders(prev => [...prev, ...newUniqueItems]);
-        
-        // Log the newly added items for debugging
-        console.log('New unique tenders added:', newUniqueItems.map(t => ({
-          hash: t.tender_hash,
-          id: t.tender_id,
-          title: t.title?.substring(0, 30) + '...'
-        })));
+        console.log('🔍 LOAD MORE: Updated local state, now have', combined.length, 'items');
       } else {
-        console.log('No new tenders received from API');
+        console.log('🔍 LOAD MORE: No more items to load');
+        setLocalHasMore(false);
       }
       
-      // Increment the next offset for future requests
-      setNextOffset(nextOffset + 1);
-      console.log(`Next offset set to: ${nextOffset + 1}`);
-      
+      // We don't need to call the context's loadMore anymore since we're managing state ourselves
     } catch (error) {
-      console.error('Error loading more tenders:', error);
+      console.error('🔍 LOAD MORE: Error in handleLoadMore:', error);
     } finally {
+      console.log('🔍 LOAD MORE: Setting isLoadingMore back to false');
       setIsLoadingMore(false);
     }
   };
@@ -224,61 +284,10 @@ const TenderList = ({
     return count;
   };
   
-  // Handle filter changes - modified to use the API
-  const handleFilterChange = (newFilters: FilterState) => {
-    setFilters(newFilters);
-    
-    // Call prop callback if provided
-    onFilter(newFilters);
-    
-    // If using context, update context params to trigger API call
-    if (!tendersProp && updateParams) {
-      // Map the local FilterState to the API's TenderParams format
-      const apiParams: Partial<TenderParams> = {
-        // Only include parameters that have values
-        categories: newFilters.categories.length > 0 ? newFilters.categories : undefined,
-        states: newFilters.states.length > 0 ? newFilters.states : undefined,
-        status: newFilters.status.length > 0 ? newFilters.status : undefined,
-        
-        // Convert Date objects to ISO strings for API
-        date_from: newFilters.dateRange.from ? 
-          (typeof newFilters.dateRange.from === 'string' ? 
-            newFilters.dateRange.from : 
-            new Date(newFilters.dateRange.from).toISOString()) 
-          : undefined,
-        
-        date_to: newFilters.dateRange.to ? 
-          (typeof newFilters.dateRange.to === 'string' ? 
-            newFilters.dateRange.to : 
-            new Date(newFilters.dateRange.to).toISOString()) 
-          : undefined,
-        
-        // Only include budget range if it differs from defaults
-        budget_min: newFilters.budgetRange[0] > 0 ? newFilters.budgetRange[0] : undefined,
-        budget_max: newFilters.budgetRange[1] < 10000000 ? newFilters.budgetRange[1] : undefined,
-      };
-      
-      console.log('Sending filter parameters to API:', apiParams);
-      
-      // This will trigger a new API request with these parameters
-      updateParams(apiParams);
-      
-      // Reset accumulated tenders when filters change
-      setAccumulatedTenders([]);
-      initializedRef.current = false;
-    }
-  };
-  
-  // Apply client-side sorting to accumulated tenders
-  const sortedTenders = useMemo(() => {
-    if (!accumulatedTenders || accumulatedTenders.length === 0) return [];
-    
-    console.log('Sorting accumulated tenders client-side with:', sort);
-    return sortTenders(accumulatedTenders, sort);
-  }, [accumulatedTenders, sort]);
-  
-  // Add a function to completely reset filters
+  // Function to completely reset filters
   const handleResetFilters = () => {
+    console.log('TenderList: Reset filters called');
+    
     const defaultFilters: FilterState = {
       categories: [],
       states: [],
@@ -287,14 +296,17 @@ const TenderList = ({
       budgetRange: [0, 10000000] as [number, number],
     };
     
+    console.log('TenderList: Setting filters to default values');
     // Update local state
     setFilters(defaultFilters);
     
+    console.log('TenderList: Calling handleFilterChange with default filters');
     // Call handler with default filters
     handleFilterChange(defaultFilters);
     
     // Close filter panel
     setIsFilterOpen(false);
+    console.log('TenderList: Closed filter panel');
   };
   
   const renderErrorMessage = () => {
@@ -312,21 +324,30 @@ const TenderList = ({
     );
   };
   
+  // Apply client-side sorting to tenders from context
+  const sortedTenders = useMemo(() => {
+    // If we have local tenders (from pagination), use those instead of baseTenders
+    const tenders = localTenders.length > 0 ? localTenders : baseTenders;
+    
+    if (!tenders || tenders.length === 0) return [];
+    
+    console.log('Sorting tenders client-side with:', sort);
+    return sortTenders(tenders, sort);
+  }, [localTenders, baseTenders, sort]);
+  
   // Function to get the current count of loaded tenders and total
   const getTenderCountText = () => {
-    if (accumulatedTenders.length < totalTenders) {
-      return (
-        <span>
-          Showing <strong>{accumulatedTenders.length}</strong> of <strong>{totalTenders}</strong> tenders
-        </span>
-      );
-    } else {
-      return (
-        <span>
-          Loaded <strong>{totalTenders}</strong> tenders
-        </span>
-      );
-    }
+    const currentCount = localTenders.length > 0 ? localTenders.length : baseTenders.length;
+    
+    return (
+      <span>
+        Showing <strong>{currentCount}</strong> 
+        {totalTenders > 0 && currentCount < totalTenders && (
+          <> of <strong>{totalTenders}</strong></>
+        )} 
+        tenders
+      </span>
+    );
   };
   
   return (
@@ -353,9 +374,9 @@ const TenderList = ({
         </Button>
       </div>
       
-      {/* Results Count - Updated to show current/total */}
+      {/* Results Count */}
       <div className="text-sm text-gray-600 dark:text-gray-400">
-        {isLoading && accumulatedTenders.length === 0 ? (
+        {isLoading && baseTenders.length === 0 ? (
           'Loading results...'
         ) : error ? (
           <span className="text-red-500">Error loading tenders</span>
@@ -364,13 +385,13 @@ const TenderList = ({
         )}
       </div>
       
-      {/* Tenders List with updated references to sortedTenders */}
+      {/* Tenders List */}
       <div className="space-y-4">
-        {isLoading && accumulatedTenders.length === 0 ? (
+        {isLoading && !isLoadingMore && baseTenders.length === 0 ? (
           <div className="flex justify-center items-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-gober-primary-500" />
           </div>
-        ) : accumulatedTenders.length === 0 ? (
+        ) : sortedTenders.length === 0 ? (
           <div className="text-center py-12 border border-dashed rounded-lg border-gray-200 dark:border-gray-700">
             <div className="text-gray-500">
               <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -390,7 +411,7 @@ const TenderList = ({
           </div>
         ) : (
           <>
-            {/* TenderResults component using accumulated tenders */}
+            {/* TenderResults component */}
             <TenderResults 
               tenders={sortedTenders}
               isLoading={isLoadingMore}
@@ -399,7 +420,7 @@ const TenderList = ({
               sort={sort}
               onSort={onSort}
               onLoadMore={handleLoadMore}
-              hasMore={accumulatedTenders.length < totalTenders} // Only enable if there are more to load
+              hasMore={localHasMore}
             />
           </>
         )}

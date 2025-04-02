@@ -1,42 +1,38 @@
-
 import { useState, useMemo } from 'react';
-import { SortState, Tender } from '@/types/types';
+import { SortState } from '@/types/types';
+import { TenderPreview } from '@/services/tenderService';
 
-export const useTenderSort = (tenders: Tender[]) => {
+export const useTenderSort = (tenders: TenderPreview[]) => {
   const [sort, setSort] = useState<SortState>({
-    field: 'updatedOn',
+    field: 'submission_date',
     direction: 'desc'
   });
   
   const sortedTenders = useMemo(() => {
     return [...tenders].sort((a, b) => {
-      let compareA, compareB;
+      let compareA: any, compareB: any;
       
       // Determine values to compare based on sort field
       switch (sort.field) {
-        case 'id':
-          compareA = a.id;
-          compareB = b.id;
+        case 'tender_id':
+          compareA = a.tender_id;
+          compareB = b.tender_id;
           break;
-        case 'budget':
-          compareA = a.budget;
-          compareB = b.budget;
+        case 'budget.amount':
+          compareA = a.budget?.amount || 0;
+          compareB = b.budget?.amount || 0;
           break;
-        case 'submitOn':
-          compareA = new Date(a.submitOn).getTime();
-          compareB = new Date(b.submitOn).getTime();
-          break;
-        case 'updatedOn':
-          compareA = new Date(a.updatedOn).getTime();
-          compareB = new Date(b.updatedOn).getTime();
+        case 'submission_date':
+          compareA = a.submission_date ? new Date(a.submission_date).getTime() : 0;
+          compareB = b.submission_date ? new Date(b.submission_date).getTime() : 0;
           break;
         case 'title':
-          compareA = a.title.toLowerCase();
-          compareB = b.title.toLowerCase();
+          compareA = a.title?.toLowerCase() || '';
+          compareB = b.title?.toLowerCase() || '';
           break;
         default:
-          compareA = new Date(a.updatedOn).getTime();
-          compareB = new Date(b.updatedOn).getTime();
+          compareA = a.submission_date ? new Date(a.submission_date).getTime() : 0;
+          compareB = b.submission_date ? new Date(b.submission_date).getTime() : 0;
       }
       
       // Apply sort direction
@@ -47,6 +43,5 @@ export const useTenderSort = (tenders: Tender[]) => {
       }
     });
   }, [tenders, sort]);
-  
   return { sort, setSort, sortedTenders };
 };

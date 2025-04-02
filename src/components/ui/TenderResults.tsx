@@ -66,11 +66,13 @@ const TenderResults = ({
     );
   };
 
-  if (isLoading) {
+  // Initial load with no tenders
+  if (tenders.length === 0 && isLoading) {
     return <div className="space-y-4">
         {[...Array(6)].map((_, index) => <div key={index} className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gober-primary-800/50" />)}
       </div>;
   }
+  
   if (tenders.length === 0) {
     return <div className="flex flex-col items-center justify-center py-16 text-center">
         <div className="text-lg font-medium mb-2">No tenders found</div>
@@ -141,6 +143,15 @@ const TenderResults = ({
             sortField={sort.field} 
           />
         ))}
+        
+        {/* Loading placeholders only at the bottom when loading more tenders */}
+        {isLoading && tenders.length > 0 && (
+          <div className="space-y-2 mt-4">
+            {[...Array(3)].map((_, index) => (
+              <div key={`loading-more-${index}`} className="h-24 animate-pulse rounded-lg bg-gray-200 dark:bg-gober-primary-800/50" />
+            ))}
+          </div>
+        )}
       </div>
       
       <div className="flex justify-center mt-8">
@@ -148,17 +159,26 @@ const TenderResults = ({
           variant="outline" 
           size="lg" 
           onClick={() => {
-            console.log('Load More button clicked in TenderResults');
+            console.log('📱 UI: Load More button clicked in TenderResults');
+            console.log('📱 UI: Props state - hasMore:', hasMore, 'isLoading:', isLoading, 'tenders.length:', tenders.length);
+            
+            // Call the provided onLoadMore function
             onLoadMore();
           }}
-          disabled={isLoading}
+          disabled={isLoading} // Only disable when loading, not based on hasMore
         >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               Loading...
             </>
-          ) : 'Load More'}
+          ) : (
+            <>
+              Load More
+              {/* Show the tender count for debugging */}
+              <span className="ml-2 text-xs text-gray-400">({tenders.length})</span>
+            </>
+          )}
         </Button>
       </div>
     </>;
