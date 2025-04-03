@@ -11,6 +11,7 @@ import { useTranslation } from 'react-i18next';
 
 const SavedTendersContent = () => {
   const { t } = useTranslation('ui');
+  const { t: tCommon } = useTranslation('common');
   
   // Use global state from TendersProvider instead of local hook
   const {
@@ -159,7 +160,7 @@ const SavedTendersContent = () => {
             <Link to="/">
               <Button variant="outline" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                {t('common.returnToList')}
+                {tCommon('returnToList')}
               </Button>
             </Link>
           </div>

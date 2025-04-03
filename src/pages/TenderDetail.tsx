@@ -174,7 +174,6 @@ const TenderDetail = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('tenderDetail.backToTenders', 'Back to Tenders')}
           </Link>
-          <h1 className="text-3xl font-bold tracking-tight">{tender.title}</h1>
           <div className="flex flex-wrap gap-2 mt-4">
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(tender.status || '')}`}>
               {t(`status.${(tender.status || '').toLowerCase()}`, tender.status || '')}

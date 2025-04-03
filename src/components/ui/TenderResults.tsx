@@ -182,7 +182,7 @@ const TenderResults = ({
           ) : (
             <>
               {t('tenderList.loadMore')}
-              <span className="ml-2 text-xs text-gray-400">({tenders.length})</span>
+              <span className="ml-2 text-xs text-gray-400"></span>
             </>
           )}
         </Button>
