@@ -1,11 +1,14 @@
 import { format } from 'date-fns';
-import { TenderDetail } from '@/services/tenderService';
+import { TenderDetail, requestTenderSummary } from '@/services/tenderService';
 import { Card, CardContent } from '@/components/ui/card';
 import TenderStatusActions from './TenderStatusActions';
 import { Badge } from '@/components/ui/badge';
-import { Sparkles, Calendar, MapPin, Building, FileText, Package, Info, ClipboardList, Euro, Briefcase } from 'lucide-react';
+import { Sparkles, Calendar, MapPin, Building, FileText, Package, Info, ClipboardList, Euro, Briefcase, Loader2 } from 'lucide-react';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useTranslation } from 'react-i18next';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/components/ui/use-toast';
+import { useState } from 'react';
 
 interface TenderDetailsCardProps {
   tender: TenderDetail;
@@ -23,6 +26,9 @@ const TenderDetailsCard = ({
   documents
 }: TenderDetailsCardProps) => {
   const { t } = useTranslation('tenders');
+  const { t: tCommon } = useTranslation('common');
+  const { toast } = useToast();
+  const [isRequestingAI, setIsRequestingAI] = useState(false);
   
   const formatCurrency = (value?: { amount?: number; currency?: string }) => {
     if (!value || !value.amount) return t('common.notSpecified', 'Not specified');
@@ -50,6 +56,38 @@ const TenderDetailsCard = ({
   // AI content availability flags
   const hasAiSummary = !!(tender.aiSummary && tender.aiSummary.trim() !== '');
   const hasAiDocument = !!(tender.aiDocument && tender.aiDocument.trim() !== '');
+  
+  // Function to request AI summary for the tender
+  const requestAISummary = async () => {
+    if (!tender.id || !tender.uri) return;
+    
+    setIsRequestingAI(true);
+    try {
+      console.log(`[AI-DEBUG] Requesting AI summary for tender ID: ${tender.id}, URI: ${tender.uri}`);
+      
+      // Call the request function from tenderService
+      const response = await requestTenderSummary(tender.id, tender.uri);
+      
+      if (response && response.task_id) {
+        console.log(`[AI-DEBUG] AI summary request initiated with task ID: ${response.task_id}`);
+        toast({
+          title: t('aiSummary.requested', "AI Summary Requested"),
+          description: t('aiSummary.generating', "We're generating an AI summary for this tender. Please check back later."),
+        });
+      } else {
+        throw new Error("Invalid response format from API");
+      }
+    } catch (error) {
+      console.error("[AI-DEBUG] Error requesting AI summary:", error);
+      toast({
+        title: t('aiSummary.requestFailed', "Request Failed"),
+        description: t('aiSummary.requestFailedDescription', "Failed to request AI summary. Please try again later."),
+        variant: "destructive"
+      });
+    } finally {
+      setIsRequestingAI(false);
+    }
+  };
   
   return (
     <Card className="overflow-hidden shadow-md border-gray-200 dark:border-gray-700">
@@ -83,13 +121,27 @@ const TenderDetailsCard = ({
         {/* Content */}
         <div className="p-6 space-y-6">
           {/* AI Summary Section */}
-          {hasAiSummary && (
+          {hasAiSummary ? (
             <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
               <h3 className="text-base font-medium mb-3 flex items-center text-blue-700 dark:text-blue-300">
                 <Sparkles className="h-4 w-4 mr-2" />
                 <span>{t('aiSummary.title', 'AI-Generated Summary')}</span>
               </h3>
               <p className="text-sm">{tender.aiSummary}</p>
+            </div>
+          ) : (
+            <div className="p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Sparkles className="h-5 w-5 text-gray-400 mr-2" />
+                  <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">{t('aiSummary.title', "AI Summary")}</h3>
+                </div>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                {isTenderSaved(tender.uri.split('/').pop())
+                  ? t('aiSummary.clickToGenerate', "Click generate to create an AI summary for this tender.")
+                  : t('aiSummary.notAvailable', "No AI summary available yet. Save this tender to generate one.")}
+              </p>
             </div>
           )}
           
