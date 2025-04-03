@@ -1,3 +1,4 @@
+// SearchBar.tsx - Component for searching tender listings
 import React, { useState, useRef, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';

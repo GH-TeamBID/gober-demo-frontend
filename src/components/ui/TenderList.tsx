@@ -129,12 +129,17 @@ const TenderList = ({
   
   // Sync local tenders with context tenders on initial load and when context changes
   useEffect(() => {
-    if (baseTenders.length > 0 && localTenders.length === 0) {
-      console.log('Initializing local tenders from context:', baseTenders.length);
-      setLocalTenders(baseTenders);
-      setLocalCurrentPage(contextParams.page || 1);
-      setLocalHasMore(hasMore);
-    }
+    console.log('TenderList: Context tenders changed, received', baseTenders.length, 'tenders');
+    
+    // Always update with new results when the tenders prop changes
+    // This ensures search/filter results are displayed immediately
+    setLocalTenders(baseTenders);
+    
+    // Also update pagination state
+    setLocalCurrentPage(contextParams.page || 1);
+    setLocalHasMore(hasMore);
+    
+    console.log('TenderList: Updated local tenders with', baseTenders.length, 'items');
   }, [baseTenders, contextParams.page, hasMore]);
   
   // Handle filter changes - uses server-side filtering via the API
@@ -144,6 +149,10 @@ const TenderList = ({
     // Update local filter state
     setFilters(newFilters);
     console.log('TenderList: Local filter state updated');
+    
+    // Reset local pagination state to prepare for new results
+    setLocalCurrentPage(1);
+    setLocalTenders([]); // Clear current results to avoid showing old items with new filters
     
     // Call prop callback if provided
     if (onFilter !== (() => {})) {

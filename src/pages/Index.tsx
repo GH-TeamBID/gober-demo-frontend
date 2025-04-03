@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTenders } from '@/hooks/useTenders';
 import Layout from '@/components/layout/Layout';
-import SearchBar from '@/components/ui/SearchBar';
+import SearchContainer from '@/components/ui/SearchContainer';
 import TenderList from '@/components/ui/TenderList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TendersProvider } from '@/contexts/TendersContext';
@@ -10,19 +10,13 @@ import { useTranslation } from 'react-i18next';
 const TendersContent = () => {
   const { t } = useTranslation('ui');
   const {
-    allTenders,
-    filteredTenders,
     savedTenders,
-    isLoading,
-    searchQuery,
-    filters,
+    savedTenderIds,
     sort,
-    setSearchQuery,
-    setFilters,
-    setSort,
+    filters,
     toggleSaveTender,
-    isTenderSaved,
-    error
+    setSort,
+    setFilters,
   } = useTenders();
   
   const [activeTab, setActiveTab] = useState('all');
@@ -32,7 +26,6 @@ const TendersContent = () => {
   };
   
   // Convert saved tenders to a Set of tender_hash values
-  const savedTenderIds = savedTenders.map(tender => tender.tender_hash);
   const savedTenderIdsSet = new Set(savedTenderIds);
   
   return (
@@ -42,17 +35,7 @@ const TendersContent = () => {
           <h1 className="text-3xl font-bold mb-6 text-center text-gober-primary-900 dark:text-white">
             {t('homepage.title')}
           </h1>
-          <SearchBar
-            value={searchQuery}
-            onSearch={setSearchQuery}
-          />
         </div>
-        
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {t('tenderList.errorLoading')}: {error}
-          </div>
-        )}
         
         <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
           <div className="flex justify-center mb-6">
@@ -78,16 +61,7 @@ const TendersContent = () => {
           </div>
           
           <TabsContent value="all" className="animate-fade-in mt-0">
-            <TenderList
-              tenders={filteredTenders}
-              isLoading={isLoading}
-              savedTenderIds={savedTenderIdsSet}
-              sort={sort}
-              filters={filters}
-              onToggleSave={toggleSaveTender}
-              onSort={setSort}
-              onFilter={setFilters}
-            />
+            <SearchContainer />
           </TabsContent>
           
           <TabsContent value="saved" className="animate-fade-in mt-0">

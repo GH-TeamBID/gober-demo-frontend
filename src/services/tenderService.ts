@@ -229,7 +229,7 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
   try {
     console.log('📡 NETWORK: fetchTenders called with params:', JSON.stringify(params, null, 2));
     
-    // Create a clean object with only defined parameters
+    // Create a clean object with only defined parameters for URL query
     const apiParams: Record<string, any> = {};
     
     // Extract pagination, search and sorting - these stay as regular query params
@@ -239,8 +239,8 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
     if (params.sort_field !== undefined) apiParams.sort_field = params.sort_field;
     if (params.sort_direction !== undefined) apiParams.sort_direction = params.sort_direction;
     
-    // Format filters for MeiliSearch - currently disabled but prepared for future use
-    const filtersForMeili: Array<{name: string, value: any, operator?: string, expression?: string}> = [];
+    // Format filters for the request body
+    const filtersForBody: Array<{name: string, value: any, operator?: string, expression?: string}> = [];
     
     // Add category filters
     if (params.categories && params.categories.length > 0) {
@@ -250,11 +250,9 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
           ? category.split(' - ')[0].trim() 
           : category;
         
-        filtersForMeili.push({
+        filtersForBody.push({
           name: 'category', // Backend uses 'category' not 'cpv_categories'
           value: code,
-          operator: '=',
-          expression: 'AND'
         });
       });
     }
@@ -262,11 +260,9 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
     // Add location filters
     if (params.states && params.states.length > 0) {
       params.states.forEach(state => {
-        filtersForMeili.push({
+        filtersForBody.push({
           name: 'location',
           value: state,
-          operator: '=',
-          expression: 'AND'
         });
       });
     }
@@ -274,129 +270,112 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
     // Add status filters
     if (params.status && params.status.length > 0) {
       params.status.forEach(status => {
-        filtersForMeili.push({
+        filtersForBody.push({
           name: 'status',
           value: status,
-          operator: '=',
-          expression: 'AND'
         });
       });
     }
     
-    // Add date range filters - using TO operator for ranges
-    if (params.date_from && params.date_to) {
-      filtersForMeili.push({
-        name: 'submission_date',
-        value: [params.date_from, params.date_to],
-        operator: 'TO',
-        expression: 'AND'
-      });
-    } else if (params.date_from) {
-      filtersForMeili.push({
-        name: 'submission_date',
+    // Add date range filters
+    if (params.date_from) {
+      filtersForBody.push({
+        name: 'submission_date_from',
         value: params.date_from,
-        operator: '>=',
-        expression: 'AND'
       });
-    } else if (params.date_to) {
-      filtersForMeili.push({
-        name: 'submission_date',
+    }
+    
+    if (params.date_to) {
+      filtersForBody.push({
+        name: 'submission_date_to',
         value: params.date_to,
-        operator: '<=',
-        expression: 'AND'
       });
     }
     
     // Add budget range filters
     if (params.budget_min !== undefined && params.budget_min > 0) {
-      filtersForMeili.push({
-        name: 'budget.amount',
+      filtersForBody.push({
+        name: 'budget_min',
         value: params.budget_min,
-        operator: '>=',
-        expression: 'AND'
       });
     }
+    
     if (params.budget_max !== undefined && params.budget_max < 10000000) {
-      filtersForMeili.push({
-        name: 'budget.amount',
+      filtersForBody.push({
+        name: 'budget_max',
         value: params.budget_max,
-        operator: '<=',
-        expression: 'AND'
       });
     }
     
-    // Only add filters parameter if we have any filters
-    if (filtersForMeili.length > 0) {
-      console.log('Prepared MeiliSearch filters (currently disabled):', filtersForMeili);
-      
-      // Add the filters in JSON format as a single string parameter to avoid arrays
-      // which can cause problems with some HTTP clients
-      apiParams.filters_json = JSON.stringify(filtersForMeili);
-      
-      // Keep this commented out until the backend is ready:
-      // apiParams.filters = filtersForMeili;
-      
-      // Add simple debug flag to see what's happening in the backend logs
-      apiParams.debug = true;
+    // Create the request body object with filters
+    const requestBody: { filters?: any } = {};
+    
+    // Only add filters to the body if we have any
+    if (filtersForBody.length > 0) {
+      console.log('Prepared filters for request body:', filtersForBody);
+      requestBody.filters = filtersForBody;
     }
     
-    // Add debugging to see exactly what's being sent to the API
-    console.log('Clean API params being sent:', apiParams);
+    // Create a URL string manually to ensure parameters are properly formatted
+    let url = '/tenders';
     
-    try {
-      // Create a URL string manually to ensure parameters are properly formatted
-      let url = '/tenders';
-      
-      // Convert apiParams to URLSearchParams for proper encoding
-      const searchParams = new URLSearchParams();
-      
-      // Add all parameters to URLSearchParams
-      Object.entries(apiParams).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          if (Array.isArray(value)) {
-            // For arrays, add each value separately with the same key
-            value.forEach(item => searchParams.append(key, item.toString()));
-          } else if (typeof value === 'object') {
-            // For objects, stringify them
-            searchParams.append(key, JSON.stringify(value));
-          } else {
-            // For primitive values
-            searchParams.append(key, value.toString());
-          }
+    // Convert apiParams to URLSearchParams for proper encoding
+    const searchParams = new URLSearchParams();
+    
+    // Add all parameters to URLSearchParams
+    Object.entries(apiParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          // For arrays, add each value separately with the same key
+          value.forEach(item => searchParams.append(key, item.toString()));
+        } else if (typeof value === 'object') {
+          // For objects, stringify them
+          searchParams.append(key, JSON.stringify(value));
+        } else {
+          // For primitive values
+          searchParams.append(key, value.toString());
         }
-      });
-      
-      // Get the query string
-      const queryString = searchParams.toString();
-      if (queryString) {
-        url += `?${queryString}`;
       }
-      
-      console.log('📡 NETWORK: Making API request to:', url);
-      
-      // Make the API request
-      console.time('🕒 API Request Time');
-      const response = await apiClient.get<PaginatedTenderResponse>(url);
-      console.timeEnd('🕒 API Request Time');
-      
-      console.log(`📡 NETWORK: Fetched ${response.data.items.length} tenders from API. Response:`, {
-        items: response.data.items.length,
-        total: response.data.total,
-        page: response.data.page,
-        size: response.data.size,
-        has_next: response.data.has_next,
-        has_prev: response.data.has_prev
-      });
-      
-      if (response.data.debug) {
-        console.log('📡 NETWORK: Debug info from API:', response.data.debug);
-      }
-      
-      return response.data;
-    } catch (apiError) {
-      console.error('Error calling API:', apiError);
-      throw apiError;
+    });
+    
+    // Get the query string
+    const queryString = searchParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
     }
+    
+    console.log('📡 NETWORK: Making API request to:', url);
+    console.log('📡 NETWORK: Request body:', requestBody);
+    
+    // Make the API request with the body
+    console.time('🕒 API Request Time');
+    
+    // Use POST if we have filters, otherwise use GET
+    let response;
+    if (Object.keys(requestBody).length > 0) {
+      // If we have filters, do a POST request with the filters in the body
+      response = await apiClient.post<PaginatedTenderResponse>(url, requestBody);
+    } else {
+      // If we don't have filters, just do a GET request
+      response = await apiClient.get<PaginatedTenderResponse>(url);
+    }
+    
+    console.timeEnd('🕒 API Request Time');
+    
+    console.log(`📡 NETWORK: Fetched ${response.data.items.length} tenders from API. Response:`, {
+      items: response.data.items.length,
+      total: response.data.total,
+      page: response.data.page,
+      size: response.data.size,
+      has_next: response.data.has_next,
+      has_prev: response.data.has_prev
+    });
+    
+    if (response.data.debug) {
+      console.log('📡 NETWORK: Debug info from API:', response.data.debug);
+    }
+    
+    return response.data;
   } catch (error: any) {
     console.error('Error fetching tenders:', error);
     

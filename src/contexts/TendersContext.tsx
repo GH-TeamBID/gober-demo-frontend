@@ -88,20 +88,16 @@ export function TendersProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      console.log('Initial fetch with params:', queryParams);
+      console.log('📡 LOAD: Fetching tenders with params:', JSON.stringify(queryParams, null, 2));
       const response = await fetchTenders(queryParams);
-      console.log('API response:', {
-        items: response.items.length,
-        total: response.total,
-        page: response.page,
-        size: response.size,
-        has_next: response.has_next
-      });
+      console.log('📡 LOAD: API response received with', response.items.length, 'items out of', response.total, 'total');
       
-      // No processing needed - use data directly
+      // Reset on first page or explicit param, otherwise append
       if (params?.page === 1 || queryParams.page === 1) {
+        console.log('📡 LOAD: Setting new tenders (page 1)');
         setTenders(response.items);
       } else {
+        console.log('📡 LOAD: Appending new tenders (page', response.page, ')');
         setTenders(prev => [...prev, ...response.items]);
       }
       
@@ -110,9 +106,8 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       setPageSize(response.size);
       
       // Determine if there are more items to load
-      // Set hasMore based on the API's response, but also check if total > currently loaded
       const hasMoreItems = response.has_next || (response.total > (response.page * response.size));
-      console.log(`Setting hasMore=${hasMoreItems} based on response.has_next=${response.has_next} and total check=${response.total > (response.page * response.size)}`);
+      console.log(`📡 LOAD: Setting hasMore=${hasMoreItems} (has_next=${response.has_next}, total=${response.total}, loaded=${response.page * response.size})`);
       setHasMore(hasMoreItems);
       
       // Update current params
@@ -122,13 +117,17 @@ export function TendersProvider({ children }: { children: ReactNode }) {
         size: response.size
       });
       
+      // Return the response for further processing if needed
+      return response;
     } catch (err: any) {
+      console.error('📡 LOAD: Error loading tenders:', err);
       setError(err.message || 'Failed to load tenders');
       toast({
         title: "Error",
         description: err.message || 'Failed to load tenders',
         variant: "destructive",
       });
+      throw err; // Re-throw for Promise chaining
     } finally {
       setIsLoading(false);
     }
@@ -262,13 +261,29 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       page: 1 // Always reset to first page when filters change
     };
     
+    // Log detailed info about the change
+    console.log('📊 FILTERS: Updating API query parameters with:', JSON.stringify(newParams, null, 2));
+    console.log('📊 FILTERS: Previous params were:', JSON.stringify(currentParams, null, 2));
+    console.log('📊 FILTERS: Full updated params are:', JSON.stringify(updatedParams, null, 2));
+    
+    // Update the current params state
     setCurrentParams(updatedParams);
     
-    // Log the updated parameters for debugging
-    console.log('Updating API query parameters:', updatedParams);
+    // Reset the tenders state to show we're getting new results
+    setTenders([]);
+    
+    // Display loading state to user
+    setIsLoading(true);
     
     // Load tenders with new params - this will query the backend
-    loadTenders(updatedParams);
+    console.log('📊 FILTERS: Calling loadTenders with updated params to trigger API request');
+    loadTenders(updatedParams)
+      .then(() => {
+        console.log('📊 FILTERS: Successfully updated search/filter results');
+      })
+      .catch(err => {
+        console.error('📊 FILTERS: Error updating search/filter results:', err);
+      });
   };
   
   // Function to reset all filters
