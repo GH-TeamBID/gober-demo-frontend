@@ -627,14 +627,8 @@ export async function unsaveTender(tenderUri: string): Promise<boolean> {
 export async function fetchTenderSummary(tenderId: string, tenderUri?: string): Promise<TenderSummary | null> {
   try {
     console.log(`[AI-DEBUG] Fetching AI summary for tender ${tenderId}${tenderUri ? `, URI: ${tenderUri}` : ''}`);
-    
-    // If we have a URI parameter, include it in the request
-    let url = `/tenders/summary/${tenderId}`;
-    //if (tenderUri) {
-    //  url += `?uri=${encodeURIComponent(tenderUri)}`;
-    //}
-    
-    const response = await apiClient.get<TenderSummary>(url);
+
+    const response = await apiClient.get<TenderSummary>(`/tenders/summary/${tenderId}`);
     
     if (response.data) {
       console.log(`[AI-DEBUG] AI summary found for tender ${tenderId}:`, {

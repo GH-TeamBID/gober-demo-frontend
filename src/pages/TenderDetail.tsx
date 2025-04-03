@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
+import Layout from '@/components/layout/Layout';
 
 // Function to get status class for styling purposes
 const getStatusClass = (status: string) => {
@@ -20,12 +21,6 @@ const getStatusClass = (status: string) => {
   
   return statusMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
 };
-
-// CPV codes structure used in the TenderDetail
-interface CPVCode {
-  code: string;
-  description?: string;
-}
 
 const TenderDetail = () => {
   const { t } = useTranslation('tenders');
@@ -131,78 +126,73 @@ const TenderDetail = () => {
   // Show loading state
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-gober-accent-500" />
-        <span className="ml-2 text-gray-500">{t('tenderDetail.loading', 'Loading tender details...')}</span>
-      </div>
+      <Layout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin text-gober-accent-500" />
+          <span className="ml-2 text-gray-500">{t('tenderDetail.loading', 'Loading tender details...')}</span>
+        </div>
+      </Layout>
     );
   }
 
   // Show error state
   if (error || !tender) {
     return (
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              {/* Error icon could go here */}
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">{t('tenderDetail.errorTitle', 'Error')}</h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>{error || tErrors('notFoundTender', 'Tender not found')}</p>
+      <Layout>
+        <div className="container mx-auto px-4 py-8">
+          <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-md">
+            <div className="flex">
+              <div className="flex-shrink-0">
+                {/* Error icon could go here */}
               </div>
-              <div className="mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => navigate('/tenders')}
-                >
-                  {tCommon('return', 'Return to Tenders List')}
-                </Button>
+              <div className="ml-3">
+                <h3 className="text-sm font-medium text-red-800">{t('tenderDetail.errorTitle', 'Error')}</h3>
+                <div className="mt-2 text-sm text-red-700">
+                  <p>{error || tErrors('notFoundTender', 'Tender not found')}</p>
+                </div>
+                <div className="mt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => navigate('/tenders')}
+                  >
+                    {tCommon('return', 'Return to Tenders List')}
+                  </Button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </Layout>
     );
   }
 
-  // Check for CPV codes in various places to handle different API response formats
-  const cpvCodes = tender.cpv_codes || 
-                  (tender.purpose?.main_classifications ? 
-                    tender.purpose.main_classifications.map((c: any) => ({ code: c.classification_id, description: c.classification_name })) : 
-                    []);
-
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-8">
-        <Link to="/tenders" className="flex items-center font-medium text-gray-600 hover:text-gober-accent-500 dark:text-gray-300 dark:hover:text-gober-accent-400 transition-colors mb-4">
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          {t('tenderDetail.backToTenders', 'Back to Tenders')}
-        </Link>
-        <h1 className="text-3xl font-bold tracking-tight">{tender.title}</h1>
-        <div className="flex flex-wrap gap-2 mt-4">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(tender.status || '')}`}>
-            {t(`status.${(tender.status || '').toLowerCase()}`, tender.status || '')}
-          </span>
-          {cpvCodes.length > 0 && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300">
-              {t('tenderDetail.cpvCode', 'CPV')}: {cpvCodes[0].code}
+    <Layout>
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="mb-8">
+          <Link to="/" className="flex items-center font-medium text-gray-600 hover:text-gober-accent-500 dark:text-gray-300 dark:hover:text-gober-accent-400 transition-colors mb-4">
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            {t('tenderDetail.backToTenders', 'Back to Tenders')}
+          </Link>
+          <h1 className="text-3xl font-bold tracking-tight">{tender.title}</h1>
+          <div className="flex flex-wrap gap-2 mt-4">
+            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(tender.status || '')}`}>
+              {t(`status.${(tender.status || '').toLowerCase()}`, tender.status || '')}
             </span>
-          )}
+          </div>
         </div>
-      </div>
 
-      <TenderDetailTabs 
-        tender={tender}
-        isTenderSaved={isTenderSaved}
-        toggleSaveTender={toggleSaveTender}
-        handleSaveAIDocument={handleSaveAIDocument}
-        getStatusClass={getStatusClass}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-      />
-    </div>
+        <TenderDetailTabs 
+          tender={tender}
+          isTenderSaved={isTenderSaved}
+          toggleSaveTender={toggleSaveTender}
+          handleSaveAIDocument={handleSaveAIDocument}
+          getStatusClass={getStatusClass}
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+        />
+      </div>
+    </Layout>
   );
 };
 
