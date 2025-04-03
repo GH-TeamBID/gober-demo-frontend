@@ -38,6 +38,66 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Handle multiple request
+let isRefreshing = false;
+let refreshSubscribers = [];
+
+const onRefreshed = (newToken) => {
+  refreshSubscribers.forEach((callback) => callback(newToken));
+  refreshSubscribers = [];
+};
+
+/* Interceptors for handle Refresh token */
+apiClient.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry && localStorage.getItem("refresh_token")) {
+      if (isRefreshing) {
+        return new Promise((resolve) => {
+          refreshSubscribers.push((newToken) => {
+            originalRequest.headers["Authorization"] = `Bearer ${newToken}`;
+            resolve(apiClient(originalRequest));
+          });
+        });
+      }
+      originalRequest._retry = true;
+      isRefreshing = true;
+      try {
+        const refreshToken = localStorage.getItem("refresh_token");
+        if (!refreshToken) {
+          console.error("No refresh token found. Redirecting to login.");
+          window.location.replace("/login")
+          return Promise.reject(error);
+        }
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh-access-token`, null, {
+          headers: {
+            Authorization: `Bearer ${refreshToken}`,
+          }
+        });
+        //console.log('DATA REFRESH', response.data)
+        const newAccessToken = response.data.access_token;
+        localStorage.setItem("auth_token", newAccessToken);
+        // Ejecutar las peticiones en espera con el nuevo token
+        onRefreshed(newAccessToken);
+        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest); // Retry original request
+      } catch (refreshError) {
+        console.error("Failed to refresh token, redirecting to login.", refreshError);
+        localStorage.removeItem("auth_token");
+        localStorage.removeItem("refresh_token");
+        window.location.replace("/login")
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -129,8 +189,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       
       // Store token and set auth state
-      const { access_token } = response.data;
+      const { access_token, refresh_token } = response.data;
       localStorage.setItem('auth_token', access_token);
+      localStorage.setItem('refresh_token', refresh_token);
       
       // Extract user info from token
       const payload = parseJwt(access_token);
