@@ -26,6 +26,7 @@ interface TendersContextType {
   limit: number;
   hasMore: boolean;
   sort: SortState;
+  savedTenderIds: Set<string>;
   
   // Tender Detail functionality
   currentTenderDetail: TenderDetail | null;
@@ -55,13 +56,19 @@ interface TendersContextType {
   resetParams: () => void;
 }
 
+// Define props for the Provider, including optional initial parameters
+interface TendersProviderProps {
+  children: ReactNode;
+  initialParams?: Partial<TenderParams>;
+}
+
 // Create the context with undefined default value
 const TendersContext = createContext<TendersContextType | undefined>(undefined);
 
 const DEFAULT_LIMIT = 10;
 
 // Provider component
-export function TendersProvider({ children }: { children: ReactNode }) {
+export function TendersProvider({ children, initialParams }: TendersProviderProps) {
   // State for tender data
   const [tenders, setTenders] = useState<TenderPreview[]>([]);
   const [savedTenders, setSavedTenders] = useState<TenderPreview[]>([]);
@@ -81,13 +88,17 @@ export function TendersProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Query parameters
-  const [currentParams, setCurrentParams] = useState<TenderParams>({
-    offset: 0,
-    limit: DEFAULT_LIMIT,
-    is_saved: false,
-    sort_field: 'submission_date' as SortField,
-    sort_direction: 'desc' as SortDirection
+  // Query parameters - Initialize with defaults, merge with initialParams
+  const [currentParams, setCurrentParams] = useState<TenderParams>(() => {
+    const defaults: TenderParams = {
+      offset: 0,
+      limit: DEFAULT_LIMIT,
+      is_saved: false,
+      sort_field: 'submission_date' as SortField,
+      sort_direction: 'desc' as SortDirection
+    };
+    // Merge defaults with any provided initialParams
+    return { ...defaults, ...initialParams }; 
   });
   
   // Function to load tenders based on params
@@ -516,6 +527,7 @@ export function TendersProvider({ children }: { children: ReactNode }) {
     limit,
     hasMore,
     sort,
+    savedTenderIds,
     
     // Tender Detail
     currentTenderDetail,

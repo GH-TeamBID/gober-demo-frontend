@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { useTenders } from '@/hooks/useTenders';
+import { useTenders } from '@/contexts/TendersContext';
 import Layout from '@/components/layout/Layout';
 import SearchContainer from '@/components/ui/SearchContainer';
-import TenderList from '@/components/ui/TenderList';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { TendersProvider } from '@/contexts/TendersContext';
 import { useTranslation } from 'react-i18next';
@@ -10,23 +9,20 @@ import { useTranslation } from 'react-i18next';
 const TendersContent = () => {
   const { t } = useTranslation('ui');
   const {
-    savedTenders,
     savedTenderIds,
-    sort,
-    filters,
-    toggleSaveTender,
-    setSort,
-    setFilters,
+    setViewMode
   } = useTenders();
   
   const [activeTab, setActiveTab] = useState('all');
   
   const handleTabChange = (value: string) => {
     setActiveTab(value);
+    if (value === 'all') {
+      setViewMode('all');
+    } else if (value === 'saved') {
+      setViewMode('saved');
+    }
   };
-  
-  // Convert saved tenders to a Set of tender_hash values
-  const savedTenderIdsSet = new Set(savedTenderIds);
   
   return (
     <Layout>
@@ -51,9 +47,9 @@ const TendersContent = () => {
                 className="data-[state=active]:bg-gober-accent-500 data-[state=active]:text-white"
               >
                 {t('tenderList.savedTenders')}
-                {savedTenders.length > 0 && (
+                {savedTenderIds.size > 0 && (
                   <span className="ml-2 bg-white text-gober-accent-500 text-xs font-semibold rounded-full h-5 w-5 flex items-center justify-center">
-                    {savedTenders.length}
+                    {savedTenderIds.size}
                   </span>
                 )}
               </TabsTrigger>
@@ -65,25 +61,7 @@ const TendersContent = () => {
           </TabsContent>
           
           <TabsContent value="saved" className="animate-fade-in mt-0">
-            {savedTenders.length > 0 ? (
-              <TenderList
-                tenders={savedTenders}
-                isLoading={false}
-                savedTenderIds={savedTenderIdsSet}
-                sort={sort}
-                filters={filters}
-                onToggleSave={toggleSaveTender}
-                onSort={setSort}
-                onFilter={setFilters}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <div className="text-lg font-medium mb-2">{t('tenderList.noSavedTenders')}</div>
-                <p className="text-gray-600 dark:text-gray-400 max-w-md">
-                  {t('tenderList.saveTendersHint')}
-                </p>
-              </div>
-            )}
+            <SearchContainer />
           </TabsContent>
         </Tabs>
       </div>
