@@ -8,7 +8,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface TenderDetailsCardProps {
   tender: TenderDetail;
@@ -29,6 +29,12 @@ const TenderDetailsCard = ({
   const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
   const [isRequestingAI, setIsRequestingAI] = useState(false);
+  
+  // Extract the tender ID once
+  const tenderId = tender.uri.split('/').pop() || '';
+  
+  // No need for local state - use the parent function directly
+  const isSaved = isTenderSaved(tenderId);
   
   const formatCurrency = (value?: { amount?: number; currency?: string }) => {
     if (!value || !value.amount) return t('common.notSpecified', 'Not specified');
@@ -110,8 +116,8 @@ const TenderDetailsCard = ({
           
           <TenderStatusActions 
             status={tender.status}
-            tenderId={tender.uri.split('/').pop()}
-            isSaved={isTenderSaved(tender.uri.split('/').pop())}
+            tenderId={tenderId}
+            isSaved={isSaved}
             onToggleSave={toggleSaveTender}
             getStatusClass={getStatusClass}
             documents={documents}
@@ -138,7 +144,7 @@ const TenderDetailsCard = ({
                 </div>
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {isTenderSaved(tender.uri.split('/').pop())
+                {isSaved
                   ? t('aiSummary.clickToGenerate', "Click generate to create an AI summary for this tender.")
                   : t('aiSummary.notAvailable', "No AI summary available yet. Save this tender to generate one.")}
               </p>

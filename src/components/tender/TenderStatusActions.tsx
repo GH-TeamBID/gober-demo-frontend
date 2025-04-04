@@ -1,6 +1,6 @@
 import { Heart, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { toggleSaveTender, generateTenderSummary, checkTenderSummaryStatus } from '@/services/documentService';
+import { generateTenderSummary, checkTenderSummaryStatus } from '@/services/documentService';
 import { useState, useEffect, useRef } from 'react';
 import { useToast } from '@/components/ui/use-toast';
 import { apiClient } from '@/lib/auth';
@@ -16,13 +16,12 @@ interface TenderStatusActionsProps {
 
 const TenderStatusActions = ({ 
   tenderId, 
-  isSaved: initialSaved, 
+  isSaved, 
   onToggleSave,
   getStatusClass,
   status = '',
   documents = []
 }: TenderStatusActionsProps) => {
-  const [isSaved, setIsSaved] = useState(initialSaved);
   const [isLoading, setIsLoading] = useState(false);
   const [processingAI, setProcessingAI] = useState(false);
   const [taskId, setTaskId] = useState<string | null>(null);
@@ -120,67 +119,7 @@ const TenderStatusActions = ({
     }
   };
 
-  const handleToggleSave = async (e?: React.MouseEvent) => {
-    // Prevent event propagation if event exists
-    if (e) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-
-    try {
-      setIsLoading(true);
-      
-      // Call our service method - we only care about it completing successfully
-      await toggleSaveTender(tenderId, isSaved);
-      
-      // Toggle the state locally after successful server response
-      const newSavedState = !isSaved;
-      setIsSaved(newSavedState);
-      
-      // If we're saving the tender, request an AI summary
-      if (newSavedState) {
-        const taskId = await requestAISummary();
-        if (taskId) {
-          setTaskId(taskId);
-        }
-      }
-      
-      // Still call the parent handler if provided
-      if (onToggleSave) {
-        onToggleSave(tenderId);
-      }
-    } catch (error) {
-      console.error('Error toggling tender save status:', error);
-      toast({
-        title: "Error",
-        description: "Failed to save tender. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Function to fetch tender documents from API
-  const fetchTenderDocuments = async (tenderId: string) => {
-    try {
-      console.log(`[AI-DEBUG] Fetching documents for tender: ${tenderId}`);
-      const response = await apiClient.get(`/tenders/documents/${tenderId}`);
-      
-      if (response.data && Array.isArray(response.data.documents)) {
-        console.log(`[AI-DEBUG] Successfully fetched ${response.data.documents.length} documents for tender ${tenderId}`);
-        return response.data.documents;
-      } else {
-        console.log('[AI-DEBUG] No documents found or invalid format for tender', tenderId);
-        return [];
-      }
-    } catch (error) {
-      console.error('[AI-DEBUG] Error fetching tender documents:', error);
-      return [];
-    }
-  };
-
-  // Function to request AI summary for the tender
+  // Separate function to request AI summary
   const requestAISummary = async () => {
     try {
       console.log(`[AI-DEBUG] Starting AI summary request for tender: ${tenderId}`);
@@ -252,9 +191,73 @@ const TenderStatusActions = ({
       return response.task_id;
     } catch (error) {
       console.error('[AI-DEBUG] Error requesting AI summary:', error);
-      // Don't show error toast - the save was successful, just not the AI summary request
-      // This is a background enhancement, not core functionality
+      
+      // Show a toast but don't affect the saved state
+      toast({
+        title: "AI Summary Generation Failed",
+        description: "We couldn't generate an AI summary, but your tender has been saved.",
+        variant: "default", // Not destructive since saving worked
+      });
+      
       return null;
+    }
+  };
+
+  const handleToggleSave = async (e?: React.MouseEvent) => {
+    // Prevent event propagation if event exists
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Rely on parent to handle the actual toggle
+      if (onToggleSave) {
+        onToggleSave(tenderId);
+      }
+      
+      // If we're saving the tender (it's currently NOT saved), request an AI summary
+      if (!isSaved) {
+        try {
+          const taskId = await requestAISummary();
+          if (taskId) {
+            setTaskId(taskId);
+          }
+        } catch (aiError) {
+          // Just log AI errors - the save operation is already complete
+          console.error('Error requesting AI summary:', aiError);
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling tender save status:', error);
+      toast({
+        title: "Error",
+        description: "Failed to update tender. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Function to fetch tender documents from API
+  const fetchTenderDocuments = async (tenderId: string) => {
+    try {
+      console.log(`[AI-DEBUG] Fetching documents for tender: ${tenderId}`);
+      const response = await apiClient.get(`/tenders/documents/${tenderId}`);
+      
+      if (response.data && Array.isArray(response.data.documents)) {
+        console.log(`[AI-DEBUG] Successfully fetched ${response.data.documents.length} documents for tender ${tenderId}`);
+        return response.data.documents;
+      } else {
+        console.log('[AI-DEBUG] No documents found or invalid format for tender', tenderId);
+        return [];
+      }
+    } catch (error) {
+      console.error('[AI-DEBUG] Error fetching tender documents:', error);
+      return [];
     }
   };
 

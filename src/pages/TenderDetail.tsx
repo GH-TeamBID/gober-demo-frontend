@@ -1,6 +1,6 @@
-import { Fragment, useCallback, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { getTenderById, getTenderSavedState, TenderDetail as TenderDetailType, saveTender, unsaveTender, saveAIDocument } from '@/services/tenderService';
+import { getTenderById, saveAIDocument } from '@/services/tenderService';
 import { TenderStatus } from '@/types/tenderTypes';
 import TenderDetailTabs from '@/components/tender/TenderDetailTabs';
 import { Button } from '@/components/ui/button';
@@ -8,6 +8,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
+import { TendersProvider, useTenders } from '@/contexts/TendersContext';
 
 // Function to get status class for styling purposes
 const getStatusClass = (status: string) => {
@@ -22,19 +23,25 @@ const getStatusClass = (status: string) => {
   return statusMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
 };
 
-const TenderDetail = () => {
+const TenderDetailContent = () => {
   const { t } = useTranslation('tenders');
   const { t: tCommon } = useTranslation('common');
   const { t: tErrors } = useTranslation('errors');
   
   const { id } = useParams<{ id: string }>();
-  const [tender, setTender] = useState<TenderDetailType | null>(null);
+  const [tender, setTender] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSaved, setIsSaved] = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState('details');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Use the context instead of local state
+  const { 
+    isTenderSaved, 
+    toggleSaveTender,
+    updateTenderAIDocument
+  } = useTenders();
 
   // Load tender details
   useEffect(() => {
@@ -55,11 +62,6 @@ const TenderDetail = () => {
         
         console.log('Tender data:', data);
         setTender(data);
-        
-        // Check if tender is saved
-        const savedState = await getTenderSavedState(id);
-        setIsSaved(savedState);
-        
       } catch (err) {
         console.error('Error fetching tender details:', err);
         setError(tErrors('unableToLoad', 'Unable to load tender details. Please try again later.'));
@@ -71,48 +73,22 @@ const TenderDetail = () => {
     fetchTenderDetails();
   }, [id, tErrors]);
 
-  // Function to check if tender is saved
-  const isTenderSaved = useCallback((tenderId: string) => {
-    return isSaved;
-  }, [isSaved]);
-
-  // Function to toggle save/unsave tender
-  const toggleSaveTender = useCallback(async (tenderId: string) => {
-    try {
-      if (isSaved) {
-        await unsaveTender(tenderId);
-        toast({
-          title: t('tenderDetail.unsaved', 'Tender Unsaved'),
-          description: t('tenderDetail.unsavedMessage', 'This tender has been removed from your saved tenders.'),
-        });
-      } else {
-        await saveTender(tenderId);
-        toast({
-          title: t('tenderDetail.saved', 'Tender Saved'),
-          description: t('tenderDetail.savedMessage', 'This tender has been added to your saved tenders.'),
-        });
-      }
-      setIsSaved(!isSaved);
-    } catch (err) {
-      console.error('Error toggling tender save state:', err);
-      toast({
-        title: t('tenderDetail.error', 'Error'),
-        description: t('tenderDetail.errorTogglingSave', 'An error occurred while updating your saved tenders.'),
-        variant: 'destructive',
-      });
-    }
-  }, [isSaved, toast, t]);
-
-  // Function to handle saving AI document
+  // Function to handle saving AI document using the context
   const handleSaveAIDocument = async (document: string) => {
     if (!id) return;
     
     try {
-      await saveAIDocument(id, document);
-      toast({
-        title: t('aiDocument.saved', 'Document Saved'),
-        description: t('aiDocument.savedMessage', 'The AI document has been saved successfully.'),
-      });
+      // Use the context function instead of direct API call
+      const success = await updateTenderAIDocument(id, document);
+      
+      if (success) {
+        toast({
+          title: t('aiDocument.saved', 'Document Saved'),
+          description: t('aiDocument.savedMessage', 'The AI document has been saved successfully.'),
+        });
+      } else {
+        throw new Error("Failed to save AI document");
+      }
     } catch (err) {
       console.error('Error saving AI document:', err);
       toast({
@@ -122,6 +98,9 @@ const TenderDetail = () => {
       });
     }
   };
+
+  // Store the translated return text to avoid type issues
+  const returnToListText = tCommon('return', 'Return to Tenders List');
 
   // Show loading state
   if (loading) {
@@ -155,7 +134,7 @@ const TenderDetail = () => {
                     variant="outline"
                     onClick={() => navigate('/tenders')}
                   >
-                    {tCommon('return', 'Return to Tenders List')}
+                    Return to Tenders List
                   </Button>
                 </div>
               </div>
@@ -176,7 +155,7 @@ const TenderDetail = () => {
           </Link>
           <div className="flex flex-wrap gap-2 mt-4">
             <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(tender.status || '')}`}>
-              {t(`status.${(tender.status || '').toLowerCase()}`, tender.status || '')}
+              {t(`status.${(tender.status || '').toLowerCase()}`, {defaultValue: tender.status || ''})}
             </span>
           </div>
         </div>
@@ -192,6 +171,15 @@ const TenderDetail = () => {
         />
       </div>
     </Layout>
+  );
+};
+
+// Wrap the component with TendersProvider
+const TenderDetail = () => {
+  return (
+    <TendersProvider>
+      <TenderDetailContent />
+    </TendersProvider>
   );
 };
 
