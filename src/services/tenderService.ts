@@ -184,20 +184,20 @@ export interface TenderPreview {
 export interface PaginatedTenderResponse {
   items: TenderPreview[];
   total: number;
-  page: number;
-  size: number;
+  offset: number;
+  limit: number;
   has_next: boolean;
   has_prev: boolean;
   debug?: any; // Optional debug information returned by the server
 }
 
 export interface TenderParams {
-  page?: number;
-  size?: number;
+  offset?: number;
+  limit?: number;
+  is_saved?: boolean;
   match?: string;
   sort_field?: string;
   sort_direction?: 'asc' | 'desc';
-  // Update types to match expected types
   categories?: string[];
   states?: string[];
   status?: string[];
@@ -220,10 +220,10 @@ export interface UserTender {
 }
 
 /**
- * Fetches a paginated list of tenders from the API
+ * Fetches a list of tenders from the API using offset/limit
  * 
- * @param params - Pagination and filter parameters
- * @returns Promise with the paginated tender response
+ * @param params - Offset, limit, filter, sort, and search parameters
+ * @returns Promise with the tender response
  */
 export async function fetchTenders(params: TenderParams = {}): Promise<PaginatedTenderResponse> {
   try {
@@ -232,157 +232,122 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
     // Create a clean object with only defined parameters for URL query
     const apiParams: Record<string, any> = {};
     
-    // Extract pagination, search and sorting - these stay as regular query params
-    if (params.page !== undefined) apiParams.page = params.page;
-    if (params.size !== undefined) apiParams.size = params.size;
+    // Extract offset/limit, search, sorting, and is_saved flag for URL params
+    if (params.offset !== undefined) apiParams.offset = params.offset;
+    if (params.limit !== undefined) apiParams.limit = params.limit;
     if (params.match !== undefined && params.match !== '') apiParams.match = params.match;
     if (params.sort_field !== undefined) apiParams.sort_field = params.sort_field;
     if (params.sort_direction !== undefined) apiParams.sort_direction = params.sort_direction;
+    if (params.is_saved === true) apiParams.is_saved = 'true'; // Add is_saved flag
     
-    // Format filters for the request body
+    // Format filters for the request body (logic remains the same)
     const filtersForBody: Array<{name: string, value: any, operator?: string, expression?: string}> = [];
     
     // Add category filters
     if (params.categories && params.categories.length > 0) {
       params.categories.forEach(category => {
-        // Extract code from category string if in format "code - description"
         const code = category.includes(' - ') 
           ? category.split(' - ')[0].trim() 
           : category;
-        
-        filtersForBody.push({
-          name: 'category', // Backend uses 'category' not 'cpv_categories'
-          value: code,
-        });
+        filtersForBody.push({ name: 'category', value: code });
       });
     }
     
     // Add location filters
     if (params.states && params.states.length > 0) {
       params.states.forEach(state => {
-        filtersForBody.push({
-          name: 'location',
-          value: state,
-        });
+        filtersForBody.push({ name: 'location', value: state });
       });
     }
     
     // Add status filters
     if (params.status && params.status.length > 0) {
       params.status.forEach(status => {
-        filtersForBody.push({
-          name: 'status',
-          value: status,
-        });
+        filtersForBody.push({ name: 'status', value: status });
       });
     }
     
     // Add date range filters
     if (params.date_from) {
-      filtersForBody.push({
-        name: 'submission_date_from',
-        value: params.date_from,
-      });
+      filtersForBody.push({ name: 'submission_date_from', value: params.date_from });
     }
-    
     if (params.date_to) {
-      filtersForBody.push({
-        name: 'submission_date_to',
-        value: params.date_to,
-      });
+      filtersForBody.push({ name: 'submission_date_to', value: params.date_to });
     }
     
     // Add budget range filters
     if (params.budget_min !== undefined && params.budget_min > 0) {
-      filtersForBody.push({
-        name: 'budget_min',
-        value: params.budget_min,
-      });
+      filtersForBody.push({ name: 'budget_min', value: params.budget_min });
     }
-    
     if (params.budget_max !== undefined && params.budget_max < 10000000) {
-      filtersForBody.push({
-        name: 'budget_max',
-        value: params.budget_max,
-      });
+      filtersForBody.push({ name: 'budget_max', value: params.budget_max });
     }
     
     // Create the request body object with filters
     const requestBody: { filters?: any } = {};
-    
-    // Only add filters to the body if we have any
     if (filtersForBody.length > 0) {
       console.log('Prepared filters for request body:', filtersForBody);
       requestBody.filters = filtersForBody;
     }
     
-    // Create a URL string manually to ensure parameters are properly formatted
+    // Create URL with query parameters
     let url = '/tenders';
-    
-    // Convert apiParams to URLSearchParams for proper encoding
     const searchParams = new URLSearchParams();
-    
-    // Add all parameters to URLSearchParams
     Object.entries(apiParams).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        if (Array.isArray(value)) {
-          // For arrays, add each value separately with the same key
-          value.forEach(item => searchParams.append(key, item.toString()));
-        } else if (typeof value === 'object') {
-          // For objects, stringify them
-          searchParams.append(key, JSON.stringify(value));
-        } else {
-          // For primitive values
-          searchParams.append(key, value.toString());
-        }
-      }
+      // Ensure boolean true is converted to string 'true' for query param
+      const paramValue = typeof value === 'boolean' ? String(value) : value;
+      if (paramValue !== undefined && paramValue !== null) {
+         if (Array.isArray(paramValue)) {
+           paramValue.forEach(item => searchParams.append(key, item.toString()));
+         } else {
+           searchParams.append(key, paramValue.toString());
+         }
+       }
     });
     
-    // Get the query string
     const queryString = searchParams.toString();
     if (queryString) {
       url += `?${queryString}`;
     }
     
     console.log('📡 NETWORK: Making API request to:', url);
-    console.log('📡 NETWORK: Request body:', requestBody);
+    console.log('📡 NETWORK: Request body:', JSON.stringify(requestBody)); // Stringify for better logging
     
-    // Make the API request with the body
+    // Make the API request
     console.time('🕒 API Request Time');
-    
-    // Use POST if we have filters, otherwise use GET
     let response;
+    // Always use POST if filters are present, GET otherwise (matching backend)
     if (Object.keys(requestBody).length > 0) {
-      // If we have filters, do a POST request with the filters in the body
       response = await apiClient.post<PaginatedTenderResponse>(url, requestBody);
     } else {
-      // If we don't have filters, just do a GET request
       response = await apiClient.get<PaginatedTenderResponse>(url);
     }
-    
     console.timeEnd('🕒 API Request Time');
     
+    // Log the response structure with offset/limit
     console.log(`📡 NETWORK: Fetched ${response.data.items.length} tenders from API. Response:`, {
       items: response.data.items.length,
       total: response.data.total,
-      page: response.data.page,
-      size: response.data.size,
+      offset: response.data.offset,
+      limit: response.data.limit,
       has_next: response.data.has_next,
-      has_prev: response.data.has_prev
+      has_prev: response.data.has_prev // Should be calculated based on offset
     });
     
     if (response.data.debug) {
       console.log('📡 NETWORK: Debug info from API:', response.data.debug);
     }
     
+    // Ensure has_prev calculation is correct based on offset (API already provides this)
+    // response.data.has_prev = response.data.offset > 0;
+    
     return response.data;
+
   } catch (error: any) {
     console.error('Error fetching tenders:', error);
-    
-    throw new Error(
-      error.response?.data?.detail || 
-      'Failed to load tenders. Please try again later.'
-    );
+    const errorMessage = error.response?.data?.detail || error.message || 'Failed to load tenders. Please try again later.';
+    console.error('Full error object:', error.response || error);
+    throw new Error(errorMessage);
   }
 }
 

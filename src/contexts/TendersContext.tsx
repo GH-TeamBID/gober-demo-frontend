@@ -9,9 +9,12 @@ import {
   saveTender,
   unsaveTender,
   UserTender,
-  TenderParams
+  TenderParams,
+  PaginatedTenderResponse
 } from '@/services/tenderService';
 import { toast } from '@/components/ui/use-toast';
+import { useTenderSort } from '@/hooks/useTenderSort';
+import { SortState, SortField, SortDirection } from '@/types/types';
 
 // Define the shape of our context
 interface TendersContextType {
@@ -19,9 +22,10 @@ interface TendersContextType {
   tenders: TenderPreview[];
   savedTenders: TenderPreview[];
   totalTenders: number;
-  currentPage: number;
-  pageSize: number;
+  currentOffset: number;
+  limit: number;
   hasMore: boolean;
+  sort: SortState;
   
   // Tender Detail functionality
   currentTenderDetail: TenderDetail | null;
@@ -37,11 +41,13 @@ interface TendersContextType {
   error: string | null;
   
   // Actions
-  loadTenders: (params?: TenderParams) => Promise<void>;
+  loadTenders: (params: TenderParams, replace?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
   refreshTenders: () => Promise<void>;
   refreshSavedTenders: () => Promise<void>;
   toggleSaveTender: (tenderId: string) => Promise<void>;
+  setViewMode: (mode: 'all' | 'saved') => void;
+  setSort: (sort: SortState) => void;
   
   // Filters
   currentParams: TenderParams;
@@ -52,6 +58,8 @@ interface TendersContextType {
 // Create the context with undefined default value
 const TendersContext = createContext<TendersContextType | undefined>(undefined);
 
+const DEFAULT_LIMIT = 10;
+
 // Provider component
 export function TendersProvider({ children }: { children: ReactNode }) {
   // State for tender data
@@ -60,9 +68,9 @@ export function TendersProvider({ children }: { children: ReactNode }) {
   const [savedTenderIds, setSavedTenderIds] = useState<Set<string>>(new Set());
   const [tenderDetailsMap, setTenderDetailsMap] = useState<Map<string, TenderPreview>>(new Map());
   const [totalTenders, setTotalTenders] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-  const [hasMore, setHasMore] = useState(false);
+  const [currentOffset, setCurrentOffset] = useState(0);
+  const [limit, setLimit] = useState(DEFAULT_LIMIT);
+  const [hasMore, setHasMore] = useState(true);
   
   // Tender Detail state
   const [currentTenderDetail, setCurrentTenderDetail] = useState<TenderDetail | null>(null);
@@ -75,231 +83,163 @@ export function TendersProvider({ children }: { children: ReactNode }) {
   
   // Query parameters
   const [currentParams, setCurrentParams] = useState<TenderParams>({
-    page: 1,
-    size: 10
+    offset: 0,
+    limit: DEFAULT_LIMIT,
+    is_saved: false,
+    sort_field: 'submission_date' as SortField,
+    sort_direction: 'desc' as SortDirection
   });
   
   // Function to load tenders based on params
-  const loadTenders = async (params?: TenderParams) => {
-    // Use provided params or current params
-    const queryParams = params || currentParams;
+  const loadTenders = useCallback(async (params: TenderParams, replace: boolean = false) => {
+    // Ensure limit and sort are always included from state/params
+    const queryParams: TenderParams = {
+      limit: limit,
+      sort_field: currentParams.sort_field,
+      sort_direction: currentParams.sort_direction,
+      ...params // params passed in take precedence
+    };
     
+    console.log(`📡 LOAD: Fetching tenders with params: ${JSON.stringify(queryParams)} (Replace=${replace})`);
     setIsLoading(true);
     setError(null);
     
     try {
-      console.log('📡 LOAD: Fetching tenders with params:', JSON.stringify(queryParams, null, 2));
       const response = await fetchTenders(queryParams);
-      console.log('📡 LOAD: API response received with', response.items.length, 'items out of', response.total, 'total');
+      console.log(`📡 LOAD: API response received. Total: ${response.total}, Offset: ${response.offset}, Limit: ${response.limit}, has_next: ${response.has_next}`);
       
-      // Reset on first page or explicit param, otherwise append
-      if (params?.page === 1 || queryParams.page === 1) {
-        console.log('📡 LOAD: Setting new tenders (page 1)');
+      // Replace or append based on 'replace' flag or if offset is 0
+      if (replace || queryParams.offset === 0) {
+        console.log('📡 LOAD: Setting/Replacing tenders state.');
         setTenders(response.items);
       } else {
-        console.log('📡 LOAD: Appending new tenders (page', response.page, ')');
-        setTenders(prev => [...prev, ...response.items]);
-      }
-      
-      setTotalTenders(response.total);
-      setCurrentPage(response.page);
-      setPageSize(response.size);
-      
-      // Determine if there are more items to load
-      const hasMoreItems = response.has_next || (response.total > (response.page * response.size));
-      console.log(`📡 LOAD: Setting hasMore=${hasMoreItems} (has_next=${response.has_next}, total=${response.total}, loaded=${response.page * response.size})`);
-      setHasMore(hasMoreItems);
-      
-      // Update current params
-      setCurrentParams({
-        ...queryParams,
-        page: response.page,
-        size: response.size
-      });
-      
-      // Return the response for further processing if needed
-      return response;
-    } catch (err: any) {
-      console.error('📡 LOAD: Error loading tenders:', err);
-      setError(err.message || 'Failed to load tenders');
-      toast({
-        title: "Error",
-        description: err.message || 'Failed to load tenders',
-        variant: "destructive",
-      });
-      throw err; // Re-throw for Promise chaining
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Function to load more tenders (append next page)
-  const loadMore = async () => {
-    console.log('🚀 CONTEXT: loadMore called with hasMore:', hasMore, 'isLoading:', isLoading);
-    
-    // Always check if total items is greater than currently loaded items
-    const currentlyLoadedItems = tenders.length;
-    const totalAvailableItems = totalTenders;
-    const hasMoreBasedOnTotal = totalAvailableItems > currentlyLoadedItems;
-    
-    console.log(`🚀 CONTEXT: Currently loaded: ${currentlyLoadedItems}, Total available: ${totalAvailableItems}`);
-    console.log(`🚀 CONTEXT: hasMore from state: ${hasMore}, hasMore based on counts: ${hasMoreBasedOnTotal}`);
-    
-    if (!hasMore && !hasMoreBasedOnTotal) {
-      console.log('🚀 CONTEXT: No more tenders to load, returning early');
-      return;
-    }
-    
-    if (isLoading) {
-      console.log('🚀 CONTEXT: Already loading tenders, returning early');
-      return;
-    }
-    
-    setIsLoading(true);
-    setError(null);
-    
-    try {
-      const nextPage = currentPage + 1;
-      console.log('🚀 CONTEXT: Loading more tenders for page:', nextPage);
-      
-      // Explicitly create the params for the next page request
-      const nextPageParams = {
-        ...currentParams,
-        page: nextPage
-      };
-      
-      console.log('🚀 CONTEXT: Fetching next page with params:', nextPageParams);
-      
-      const response = await fetchTenders(nextPageParams);
-      
-      console.log('🚀 CONTEXT: Received response for page', nextPage, 'with', response.items.length, 'items');
-      console.log('🚀 CONTEXT: API response details:', {
-        items: response.items.length,
-        total: response.total,
-        page: response.page,
-        size: response.size,
-        has_next: response.has_next
-      });
-      
-      if (response.items.length === 0) {
-        console.log('🚀 CONTEXT: Received empty page, no more results available');
-        setHasMore(false);
-        toast({
-          title: "End of results",
-          description: "No more tenders to load.",
-          duration: 3000,
-        });
-        setIsLoading(false);
-        return;
-      }
-      
-      // Append new items to existing tenders
-      const currentTenders = [...tenders]; // Create a copy of current tenders
-      const combinedTenders = [...currentTenders, ...response.items];
-      setTenders(combinedTenders);
-      
-      setTotalTenders(response.total);
-      setCurrentPage(response.page);
-      setPageSize(response.size);
-      
-      // FIXED: Calculate using our local copy rather than the state which hasn't updated yet
-      const updatedTotal = response.total;
-      const updatedLoaded = combinedTenders.length; // Use the combined array length instead of tenders.length + response.items.length
-      const updatedHasMore = response.has_next || (updatedTotal > updatedLoaded);
-      
-      console.log(`🚀 CONTEXT: After load more: Loaded ${updatedLoaded} of ${updatedTotal} items`);
-      console.log(`🚀 CONTEXT: Setting hasMore=${updatedHasMore} based on API has_next=${response.has_next} and count check=${updatedTotal > updatedLoaded}`);
-      
-      setHasMore(updatedHasMore);
-      
-      // Notify user if no more results
-      if (!updatedHasMore) {
-        toast({
-          title: "End of results",
-          description: "You've reached the end of the tender list.",
-          duration: 3000,
+        console.log('📡 LOAD: Appending tenders state.');
+        // Prevent duplicates when appending (though ideally API wouldn't send duplicates)
+        setTenders(prev => {
+          const existingIds = new Set(prev.map(t => t.tender_hash));
+          const newItems = response.items.filter(t => !existingIds.has(t.tender_hash));
+          return [...prev, ...newItems];
         });
       }
       
-      // Update current params
+      // Update state based on response
+      setTotalTenders(response.total);
+      setCurrentOffset(response.offset + response.items.length); // Next offset is current + items received
+      setLimit(response.limit); // Update limit based on response (in case API overrides)
+      setHasMore(response.has_next); // Directly use API flag
+      
+      // Update currentParams state to reflect the actual params used and response state
       setCurrentParams(prev => ({
-        ...prev,
-        page: nextPage
+        ...prev, // Keep existing filters/sort/match
+        ...queryParams, // Apply potentially updated params (like offset, limit, sort)
+        offset: response.offset, // Reflect the actual offset returned by API
+        limit: response.limit // Reflect the actual limit returned by API
       }));
       
+      console.log(`📡 LOAD: State updated. Total: ${response.total}, Next Offset: ${response.offset + response.items.length}, Limit: ${response.limit}, HasMore: ${response.has_next}`);
+      
     } catch (err: any) {
-      console.error('🚀 CONTEXT: Error loading more tenders:', err);
-      setError(err.message || 'Failed to load more tenders');
+      console.error('📡 LOAD: Error loading tenders:', err);
+      const errorMsg = err.message || 'Failed to load tenders';
+      setError(errorMsg);
       toast({
         title: "Error",
-        description: err.message || 'Failed to load more tenders',
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [limit, currentParams.sort_field, currentParams.sort_direction]);
   
-  // Function to refresh the current tenders
-  const refreshTenders = async () => {
-    // Reset to page 1 when refreshing
-    const refreshParams = {
-      ...currentParams,
-      page: 1
-    };
+  // Function to load more tenders
+  const loadMore = useCallback(async () => {
+    console.log(`🚀 CONTEXT: loadMore called. HasMore: ${hasMore}, IsLoading: ${isLoading}`);
     
-    setCurrentParams(refreshParams);
-    await loadTenders(refreshParams);
-  };
+    if (!hasMore || isLoading) {
+      console.log('🚀 CONTEXT: Cannot load more, returning early.');
+      return;
+    }
+    
+    const nextOffset = currentOffset; // Calculate next offset based on current state
+    console.log(`🚀 CONTEXT: Requesting next batch starting from offset: ${nextOffset}`);
+    
+    // Call loadTenders with the next offset, keeping other params (including sort)
+    await loadTenders({ ...currentParams, offset: nextOffset }, false);
+    
+  }, [isLoading, hasMore, currentParams, currentOffset, loadTenders]);
   
-  // Function to update filter parameters
-  const updateParams = (newParams: Partial<TenderParams>) => {
-    // When changing filters, reset to page 1
+  // Function to refresh the current view (resets offset)
+  const refreshTenders = useCallback(async () => {
+    console.log('🔄 CONTEXT: Refreshing tenders list (offset=0)');
+    setCurrentOffset(0); // Reset offset state locally first
+    // Call loadTenders with current filters/sort but offset 0, replace=true
+    await loadTenders({ ...currentParams, offset: 0 }, true);
+  }, [currentParams, loadTenders]);
+  
+  // Function to update filter/search parameters
+  const updateParams = useCallback((newParams: Partial<TenderParams>) => {
+    console.log(`📊 FILTERS: updateParams called with: ${JSON.stringify(newParams)}`);
+    
+    const { sort_field, sort_direction, ...otherNewParams } = newParams;
+    
     const updatedParams = {
       ...currentParams,
-      ...newParams,
-      page: 1 // Always reset to first page when filters change
+      ...otherNewParams,
+      offset: 0
     };
     
-    // Log detailed info about the change
-    console.log('📊 FILTERS: Updating API query parameters with:', JSON.stringify(newParams, null, 2));
-    console.log('📊 FILTERS: Previous params were:', JSON.stringify(currentParams, null, 2));
-    console.log('📊 FILTERS: Full updated params are:', JSON.stringify(updatedParams, null, 2));
-    
-    // Update the current params state
+    console.log(`📊 FILTERS: Applying new params: ${JSON.stringify(updatedParams)}`);
     setCurrentParams(updatedParams);
+    setCurrentOffset(0);
     
-    // Reset the tenders state to show we're getting new results
-    setTenders([]);
-    
-    // Display loading state to user
-    setIsLoading(true);
-    
-    // Load tenders with new params - this will query the backend
-    console.log('📊 FILTERS: Calling loadTenders with updated params to trigger API request');
-    loadTenders(updatedParams)
-      .then(() => {
-        console.log('📊 FILTERS: Successfully updated search/filter results');
-      })
-      .catch(err => {
-        console.error('📊 FILTERS: Error updating search/filter results:', err);
-      });
-  };
+    loadTenders(updatedParams, true);
+  }, [currentParams, loadTenders]);
   
-  // Function to reset all filters
-  const resetParams = () => {
-    const defaultParams = {
-      page: 1,
-      size: 10
+  // Initialize sort state AFTER updateParams
+  const [sort, setSortState] = useState<SortState>({
+    field: currentParams.sort_field as SortField,
+    direction: currentParams.sort_direction as SortDirection
+  });
+  
+  // Function to handle sort changes AFTER sort state and updateParams
+  const setSort = useCallback((newSort: SortState) => {
+    console.log(`🔄 SORT: Updating sort state to: ${newSort.field} ${newSort.direction}`);
+    setSortState(newSort);
+    updateParams({ 
+      sort_field: newSort.field, 
+      sort_direction: newSort.direction 
+    });
+  }, [updateParams]);
+  
+  // Function to reset all parameters to default (all tenders)
+  const resetParams = useCallback(() => {
+    const defaultSort: SortState = { field: 'submission_date', direction: 'desc' };
+    const defaultParams: TenderParams = {
+      offset: 0,
+      limit: DEFAULT_LIMIT,
+      is_saved: false, // Reset to showing all tenders
+      sort_field: defaultSort.field,
+      sort_direction: defaultSort.direction
     };
-    
-    console.log('Resetting all filters to defaults');
-    setCurrentParams(defaultParams);
-    loadTenders(defaultParams);
-  };
+    console.log('🔄 CONTEXT: Resetting all parameters to default');
+    setSortState(defaultSort); // Reset sort state locally
+    setCurrentParams(defaultParams); // Reset params including sort
+    setCurrentOffset(0);
+    loadTenders(defaultParams, true); // Load with defaults
+  }, [loadTenders]);
+  
+  // Function to set the view mode (all vs saved)
+  const setViewMode = useCallback((mode: 'all' | 'saved') => {
+    const isSavedView = mode === 'saved';
+    console.log(`👁️ VIEW: Setting view mode to '${mode}' (is_saved=${isSavedView})`);
+    // Update params triggers a refresh with offset 0 and the new is_saved value
+    updateParams({ is_saved: isSavedView });
+  }, [updateParams]);
   
   // Function to refresh saved tenders
   const refreshSavedTenders = useCallback(async () => {
+    console.log('💾 SAVED: Refreshing saved tenders list...');
     try {
       setIsLoading(true);
       setError(null);
@@ -322,7 +262,7 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       const tendersToFetch = savedUris.filter(uri => !currentDetailsMap.has(uri));
       
       if (tendersToFetch.length > 0) {
-        console.log(`Fetching details for ${tendersToFetch.length} saved tenders`);
+        console.log(`💾 SAVED: Fetching details for ${tendersToFetch.length} saved tenders`);
         
         // Fetch details for each tender
         const fetchPromises = tendersToFetch.map(async (uri) => { // Changed from hash to uri
@@ -330,7 +270,7 @@ export function TendersProvider({ children }: { children: ReactNode }) {
             const tenderPreview = await fetchTenderPreviewById(uri); // Changed from hash to uri
             return { id: uri, details: tenderPreview, success: true }; // Changed from hash to uri
           } catch (err) {
-            console.error(`Failed to fetch preview for tender ${uri}:`, err); // Changed from hash to uri
+            console.error(`💾 SAVED: Failed to fetch preview for tender ${uri}:`, err); // Changed from hash to uri
             return { id: uri, details: null, success: false }; // Changed from hash to uri
           }
         });
@@ -357,11 +297,11 @@ export function TendersProvider({ children }: { children: ReactNode }) {
         } else {
           // For IDs without details yet, add a loading placeholder
           return {
-            tender_hash: 'Loading...',
+            tender_hash: 'Loading...', // Use URI as hash for key prop if needed
             tender_id: uri,
             title: 'Loading tender details...',
             isLoading: true,
-            submission_date: new Date().toISOString(),
+            submission_date: new Date().toISOString(), // Placeholder date
             n_lots: 0,
             pub_org_name: 'Loading...',
             cpv_categories: ['Loading...']
@@ -371,23 +311,30 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       
       // Update saved tenders state
       setSavedTenders(updatedSavedTenders);
+      console.log(`💾 SAVED: Finished refreshing saved tenders. Count: ${updatedSavedTenders.length}`);
       
     } catch (err: any) {
-      setError(err.message || 'Failed to load saved tenders');
+      const errorMsg = err.message || 'Failed to load saved tenders';
+      setError(errorMsg);
       toast({
         title: "Error",
-        description: err.message || 'Failed to load saved tenders',
+        description: errorMsg,
         variant: "destructive",
       });
     } finally {
-      setIsLoading(false);
+      // Decide if saved tender refresh should affect main loading indicator
+      // Maybe use a separate loading state for saved tenders?
+      // For now, let's keep it simple:
+      // setIsLoading(false); 
     }
   }, [tenderDetailsMap]);
   
   // Function to toggle saved state of a tender
   const toggleSaveTender = useCallback(async (tenderId: string) => {
+    console.log(`💾 SAVED: Toggling save for tender: ${tenderId}`);
     try {
       const isSaved = savedTenderIds.has(tenderId);
+      console.log(`💾 SAVED: Tender ${tenderId} is currently ${isSaved ? 'saved' : 'not saved'}. Action: ${isSaved ? 'Unsaving' : 'Saving'}`);
       
       // Optimistic update
       const newSavedIds = new Set(savedTenderIds);
@@ -398,48 +345,53 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       }
       setSavedTenderIds(newSavedIds);
       
-      // Update saved tenders array
+      // Update saved tenders array optimistically
       if (isSaved) {
         setSavedTenders(prev => prev.filter(t => t.tender_hash !== tenderId));
       } else {
-        // Add the tender if we have its details
-        const tenderDetails = tenderDetailsMap.get(tenderId);
+        // Try to add the tender if we have its details in the main list or map
+        const tenderDetails = tenders.find(t => t.tender_hash === tenderId) || tenderDetailsMap.get(tenderId);
         if (tenderDetails) {
           setSavedTenders(prev => [...prev, tenderDetails]);
+        } else {
+            console.warn(`💾 SAVED: Cannot add tender ${tenderId} to saved list optimistically - details not found.`);
+            // Consider fetching details here if needed immediately
         }
       }
       
       // Call API
-      const success = isSaved 
+      const success = isSaved
         ? await unsaveTender(tenderId)
         : await saveTender(tenderId);
       
       if (!success) {
-        throw new Error('Failed to update saved status');
+        // API call failed
+        console.error(`💾 SAVED: API call failed for ${isSaved ? 'unsave' : 'save'} tender ${tenderId}.`);
+        throw new Error('Failed to update saved status via API');
       }
       
-      // Show success toast
+      // Success
+      console.log(`💾 SAVED: Successfully ${isSaved ? 'unsaved' : 'saved'} tender ${tenderId} via API.`);
       toast({
-        description: isSaved 
-          ? "Tender removed from favorites" 
+        description: isSaved
+          ? "Tender removed from favorites"
           : "Tender saved to your favorites",
         duration: 2000,
       });
       
     } catch (error: any) {
-      console.error(`Error toggling save for tender ${tenderId}:`, error);
+      console.error(`💾 SAVED: Error toggling save for tender ${tenderId}:`, error);
       
-      // Revert the optimistic update
-      await refreshSavedTenders();
-      
-      // Show error toast
+      // Revert the optimistic update by refreshing
+      // This is crucial to ensure UI consistency
       toast({
         variant: "destructive",
         title: "Action failed",
-        description: error.message || 'Failed to update saved status',
+        description: `Failed to update saved status: ${error.message || 'Unknown error'}. Reverting changes.`, 
       });
+      await refreshSavedTenders();
     }
-  }, [savedTenderIds, tenderDetailsMap, refreshSavedTenders]);
+  }, [savedTenderIds, tenderDetailsMap, refreshSavedTenders, tenders]);
   
   // Function to fetch a detailed tender by ID
   const fetchTenderDetailById = useCallback(async (tenderId: string): Promise<TenderDetail | null> => {
@@ -538,15 +490,19 @@ export function TendersProvider({ children }: { children: ReactNode }) {
       
       return false;
     }
-  }, [currentTenderDetail, toast]);
+  }, [currentTenderDetail]);
   
-  // Load tenders on initial render
+  // Load initial tenders (all) on mount
   useEffect(() => {
-    loadTenders();
-  }, []);
-
-  // Load saved tenders on initial render
+    console.log("CONTEXT INIT: Performing initial load (offset=0)");
+    // Load with default params (offset 0, is_saved false)
+    loadTenders(currentParams, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Run only once on mount
+  
+  // Load initial saved tenders on mount
   useEffect(() => {
+    console.log("CONTEXT INIT: Performing initial saved tenders load");
     refreshSavedTenders();
   }, [refreshSavedTenders]);
   
@@ -556,9 +512,10 @@ export function TendersProvider({ children }: { children: ReactNode }) {
     tenders,
     savedTenders,
     totalTenders,
-    currentPage,
-    pageSize,
+    currentOffset,
+    limit,
     hasMore,
+    sort,
     
     // Tender Detail
     currentTenderDetail,
@@ -579,6 +536,8 @@ export function TendersProvider({ children }: { children: ReactNode }) {
     refreshTenders,
     refreshSavedTenders,
     toggleSaveTender,
+    setViewMode,
+    setSort,
     
     // Filters
     currentParams,

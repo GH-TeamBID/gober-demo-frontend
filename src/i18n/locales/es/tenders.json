@@ -117,7 +117,7 @@
   "aiSummary": {
     "title": "Resumen Generado por IA",
     "notAvailable": "No hay resumen IA disponible aún. Guarda esta licitación para generar uno.",
-    "clickToGenerate": "Haz clic en generar para crear un resumen IA para esta licitación.",
+    "clickToGenerate": "No hay resumen IA disponible. Intenta guardar esta licitación de nuevo.",
     "requested": "Resumen IA Solicitado",
     "generating": "Estamos generando un resumen IA para esta licitación. Por favor, vuelve más tarde.",
     "requestFailed": "Solicitud Fallida",

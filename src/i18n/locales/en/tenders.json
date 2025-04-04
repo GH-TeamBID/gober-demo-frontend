@@ -117,7 +117,7 @@
   "aiSummary": {
     "title": "AI-Generated Summary",
     "notAvailable": "No AI summary available yet. Save this tender to generate one.",
-    "clickToGenerate": "Click generate to create an AI summary for this tender.",
+    "clickToGenerate": "No AI summary could be created. Try saving this tender again.",
     "requested": "AI Summary Requested",
     "generating": "We're generating an AI summary for this tender. Please check back later.",
     "requestFailed": "Request Failed",

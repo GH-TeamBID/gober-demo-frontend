@@ -145,8 +145,8 @@ const TenderDetailsCard = ({
               </div>
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
                 {isSaved
-                  ? t('aiSummary.clickToGenerate', "Click generate to create an AI summary for this tender.")
-                  : t('aiSummary.notAvailable', "No AI summary available yet. Save this tender to generate one.")}
+                  ? t('aiSummary.clickToGenerate')
+                  : t('aiSummary.notAvailable')}
               </p>
             </div>
           )}
@@ -625,27 +625,6 @@ const TenderDetailsCard = ({
               </AccordionItem>
             )}
           </Accordion>
-          
-          {/* AI Document Link */}
-          {hasAiDocument && (
-            <div className="mt-6 border-t border-gray-200 dark:border-gray-700 pt-4">
-              <div className="flex items-center text-blue-600 dark:text-blue-400">
-                <Sparkles className="h-4 w-4 mr-2" />
-                <span className="font-medium">{t('aiDocument.title', 'AI-Generated Document')}</span>
-              </div>
-              <div className="mt-2">
-                <a 
-                  href={tender.aiDocument}
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline inline-flex items-center"
-                >
-                  <FileText className="h-4 w-4 mr-1" />
-                  {t('aiDocument.view', 'View AI-Generated Document')}
-                </a>
-              </div>
-            </div>
-          )}
         </div>
       </CardContent>
     </Card>
