@@ -8,11 +8,8 @@ import { apiClient } from '@/lib/auth';
 import { useToast } from '@/components/ui/use-toast';
 import { useTranslation } from 'react-i18next';
 
-// Add type for the metadata response
-interface AIDocumentMetadata {
-  url_document: string | null;
-  summary?: string; // Assuming summary might also be present
-}
+// Configuration constants
+const MIN_LOADING_TIME_MS = 1000;
 
 interface TenderDetailTabsProps {
   tender: TenderDetail;
@@ -24,9 +21,6 @@ interface TenderDetailTabsProps {
   setActiveTab: (tab: string) => void;
   onSummaryUpdate: (summary: string | null) => void;
 }
-
-// Configuration constants
-const MIN_LOADING_TIME_MS = 2000;
 
 const TenderDetailTabs = ({
   tender,
@@ -46,104 +40,91 @@ const TenderDetailTabs = ({
   const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
-  // Error message with translation
   const ERROR_MESSAGE = t('aiDocument.errorLoading', "Error loading AI document content. Please try again later.");
-
-  // Helper to create a cancellable timeout
-  const timeout = (ms: number) => {
-    return new Promise<void>(resolve => {
-      const id = setTimeout(() => resolve(), ms);
-      return () => clearTimeout(id);
-    });
-  };
 
   useEffect(() => {
     if (!tender || !tender.id) {
-      console.log("[TenderDetailTabs] Skipping effect run: tender or tender.id is missing.");
       return;
     }
 
-    console.log("[TenderDetailTabs] useEffect running with tender ID:", tender.id);
     let isMounted = true;
     abortControllerRef.current = new AbortController();
     const controller = abortControllerRef.current;
 
-    const loadDocumentContent = async () => {
+    const loadDocumentContentViaProxy = async () => {
       try {
-        console.log(`[TenderDetailTabs] Attempting to fetch AI document metadata for tender ID: ${tender.id}`);
         setIsDocumentLoading(true);
+        setMarkdownContent("");
         const startTime = Date.now();
 
-        // Step 1: Fetch document metadata (URL and potentially summary)
-        const metadataResponse = await apiClient.get<AIDocumentMetadata>(
-          `/tenders/ai_documents/${tender.id}`,
-          { signal: controller.signal }
+        const response = await apiClient.get<string>(
+          `/tenders/ai-document-content/${tender.id}`,
+          {
+            signal: controller.signal,
+            headers: { 'Accept': 'text/markdown' }
+          }
         );
 
         if (!isMounted) return;
 
-        const documentUrl = metadataResponse.data?.url_document;
+        const markdownText = response.data;
 
-        // Also get the summary
-        const summary = metadataResponse.data?.summary;
-        if (isMounted && summary) {
-          console.log("[TenderDetailTabs] Calling onSummaryUpdate with:", summary);
-          onSummaryUpdate(summary);
-        }
+        if (markdownText) {
+          setMarkdownContent(markdownText);
 
-        if (documentUrl) {
-          console.log("Found document URL:", documentUrl);
-          // Step 2: Fetch the actual document content from the URL
-          const contentResponse = await fetch(documentUrl, { signal: controller.signal });
-
-          if (!isMounted) return;
-
-          if (!contentResponse.ok) {
-            throw new Error(`Failed to fetch document content: ${contentResponse.statusText}`);
+          if (tender.summary) {
+            onSummaryUpdate(tender.summary);
+          } else {
+             console.warn("[TenderDetailTabs] Summary not found in tender object.");
+             onSummaryUpdate(null);
           }
 
-          const markdownText = await contentResponse.text();
-          if (isMounted) {
-            setMarkdownContent(markdownText);
-            console.log("Successfully loaded markdown content.");
-          }
         } else {
-          if (isMounted) {
-            // Handle case where URL is not available
-            console.log("AI document URL not found in metadata.");
+            console.warn("[TenderDetailTabs] Proxy returned empty content.");
             setMarkdownContent(t('aiDocument.notFound', "AI document not available for this tender."));
-          }
+             onSummaryUpdate(null);
         }
 
-        // Calculate elapsed time and ensure minimum loading time
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime < MIN_LOADING_TIME_MS) {
-          // Use a separate timeout mechanism that doesn't rely on the abort controller
           await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME_MS - elapsedTime));
         }
 
       } catch (error: any) {
-        if (error.name === 'AbortError') {
-          console.log('Fetch aborted');
-          return;
-        }
-        
-        console.error("Document fetching failed:", error);
-        if (isMounted) {
-          setMarkdownContent(ERROR_MESSAGE);
-          // Ensure error message is displayed for a minimum time if loading was very fast
-          await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME_MS));
-        }
+         if (error.name === 'AbortError') {
+           return;
+         }
+
+         let errorStatus = error.response?.status;
+         let errorMessage = error.message;
+         if (error.response) {
+             errorMessage = error.response.data?.detail || error.response.statusText || errorMessage;
+             console.error(`Proxy fetch failed! Status: ${errorStatus}. Message: ${errorMessage}`);
+
+             if (errorStatus === 404) {
+                 toast({ title: "Not Found", description: "The AI document file was not found or could not be retrieved.", variant: "destructive" });
+             } else {
+                  toast({ title: "Error Fetching Document", description: errorMessage, variant: "destructive" });
+             }
+         } else {
+            console.error("[TenderDetailTabs] Proxy fetch failed with no response:", error);
+            toast({ title: "Network Error", description: "Could not connect to the server to fetch the document.", variant: "destructive" });
+         }
+
+         if (isMounted) {
+           setMarkdownContent(ERROR_MESSAGE);
+            onSummaryUpdate(null);
+           await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME_MS));
+         }
       } finally {
-        if (isMounted) {
-          setIsDocumentLoading(false);
-        }
+          if (isMounted) {
+            setIsDocumentLoading(false);
+          }
       }
     };
 
-    loadDocumentContent();
+    loadDocumentContentViaProxy();
 
-    // Cleanup function
     return () => {
       isMounted = false;
       if (abortControllerRef.current) {
@@ -151,9 +132,8 @@ const TenderDetailTabs = ({
         abortControllerRef.current.abort();
       }
     };
-  }, [tender?.id, ERROR_MESSAGE, t, onSummaryUpdate]);
+  }, [tender?.uri, ERROR_MESSAGE, t, onSummaryUpdate, tender?.summary]);
 
-  // If we're loading, switch to details tab
   useEffect(() => {
     if (isDocumentLoading && activeTab === 'document') {
       setActiveTab('details');

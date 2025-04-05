@@ -16,6 +16,7 @@ import { useTenders } from '@/contexts/TendersContext';
 // Interface for the metadata endpoint response
 interface AIDocumentMetadata {
   url_document: string | null;
+  ai_doc_sas_token: string | null;
   summary?: string | null;
 }
 

@@ -370,9 +370,13 @@ export async function fetchTenderDetail(tenderId: string): Promise<TenderDetail>
     // Extract data from the response
     const rawTenderDetail = response.data.data;
     
+    // Add this log:
+    console.log("[fetchTenderDetail_DEBUG] Raw data from backend:", JSON.stringify(rawTenderDetail, null, 2));
+    
     // Process and enrich the data
     const enrichedDetail: TenderDetail = {
       ...rawTenderDetail,
+      id: rawTenderDetail.uri,
       
       // Extract derived fields from the raw data for convenience
       tender_hash: rawTenderDetail.id, // Use the ID as the hash

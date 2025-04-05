@@ -163,7 +163,3 @@ export async function generateBlobSasUrl(blobPath: string): Promise<string> {
     );
   }
 }
-
-//generateBlobSasUrl(`d4a74781b9050bea1aa5b6bbbec2a7c61673e9e11c32e637fc5a8b3a8bd84bc7`);
-
-
