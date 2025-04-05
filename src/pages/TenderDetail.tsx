@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useState, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { getTenderById, saveAIDocument } from '@/services/tenderService';
 import { TenderStatus } from '@/types/tenderTypes';
@@ -43,35 +43,66 @@ const TenderDetailContent = () => {
     updateTenderAIDocument
   } = useTenders();
 
-  // Load tender details
-  useEffect(() => {
-    const fetchTenderDetails = async () => {
-      if (!id) {
+  // --- Function to fetch tender details ---
+  const fetchTenderDetails = useCallback(async () => {
+    if (!id) {
+      setError(tErrors('notFoundTender', 'Tender not found'));
+      setLoading(false);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null); // Clear previous errors
+      const data = await getTenderById(id);
+      if (!data) {
         setError(tErrors('notFoundTender', 'Tender not found'));
-        setLoading(false);
+        setTender(null); // Clear tender data on not found
         return;
       }
-
-      try {
-        setLoading(true);
-        const data = await getTenderById(id);
-        if (!data) {
-          setError(tErrors('notFoundTender', 'Tender not found'));
-          return;
-        }
-        
-        console.log('Tender data:', data);
-        setTender(data);
-      } catch (err) {
-        console.error('Error fetching tender details:', err);
-        setError(tErrors('unableToLoad', 'Unable to load tender details. Please try again later.'));
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchTenderDetails();
+      
+      console.log('[TenderDetailContent] Fetched tender data:', data);
+      setTender(data);
+    } catch (err) {
+      console.error('[TenderDetailContent] Error fetching tender details:', err);
+      setError(tErrors('unableToLoad', 'Unable to load tender details. Please try again later.'));
+      setTender(null); // Clear tender data on error
+    } finally {
+      setLoading(false);
+    }
   }, [id, tErrors]);
+
+  // --- Load tender details on initial mount or ID change ---
+  useEffect(() => {
+    console.log('[TenderDetailContent] Initial fetch triggered.');
+    fetchTenderDetails();
+  }, [fetchTenderDetails]); // Depend on the memoized fetch function
+
+  // Callback to update summary in tender state
+  const handleSummaryUpdate = useCallback((newSummary: string | null) => {
+    setTender((prevTender: any) => {
+      console.log("[TenderDetailContent] setTender callback triggered.");
+      if (!prevTender) {
+        console.log("[TenderDetailContent] No previous tender state.");
+        return null;
+      }
+      if (newSummary !== null && prevTender.summary !== newSummary) {
+        console.log("[TenderDetailContent] Summary changed. Updating state.");
+        const updatedTender = { ...prevTender, summary: newSummary };
+        console.log("[TenderDetailContent] New tender state object:", updatedTender);
+        return updatedTender;
+      } else {
+        console.log("[TenderDetailContent] Summary unchanged or newSummary is null. Not updating state.");
+      }
+      return prevTender;
+    });
+  }, []);
+
+  // --- Callback to trigger data refresh --- 
+  const handleTaskComplete = useCallback(() => {
+    console.log('[TenderDetailContent] AI task completed. Triggering data refresh.');
+    fetchTenderDetails(); // Re-fetch all tender data
+  }, [fetchTenderDetails]);
 
   // Function to handle saving AI document using the context
   const handleSaveAIDocument = async (document: string) => {
@@ -168,6 +199,7 @@ const TenderDetailContent = () => {
           getStatusClass={getStatusClass}
           activeTab={activeTab}
           setActiveTab={setActiveTab}
+          onSummaryUpdate={handleSummaryUpdate}
         />
       </div>
     </Layout>

@@ -1,5 +1,6 @@
 import { format } from 'date-fns';
 import { TenderDetail, requestTenderSummary } from '@/services/tenderService';
+import { apiClient } from '@/lib/auth';
 import { Card, CardContent } from '@/components/ui/card';
 import TenderStatusActions from './TenderStatusActions';
 import { Badge } from '@/components/ui/badge';
@@ -8,7 +9,15 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { useTranslation } from 'react-i18next';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import AISummary from '../ui/AISummary';
+import { useTenders } from '@/contexts/TendersContext';
+
+// Interface for the metadata endpoint response
+interface AIDocumentMetadata {
+  url_document: string | null;
+  summary?: string | null;
+}
 
 interface TenderDetailsCardProps {
   tender: TenderDetail;
@@ -28,11 +37,66 @@ const TenderDetailsCard = ({
   const { t } = useTranslation('tenders');
   const { t: tCommon } = useTranslation('common');
   const { toast } = useToast();
-  const [isRequestingAI, setIsRequestingAI] = useState(false);
+  
+  // --- Get context data ---
+  const { aiSummariesMap, updateAISummaryInCache } = useTenders();
   
   // Extract the tender ID once
   const tenderId = tender.uri.split('/').pop() || '';
   
+  // --- Local state for the summary ---
+  // Initialize from cache first, then prop
+  const [displaySummary, setDisplaySummary] = useState<string | null>(
+    aiSummariesMap.get(tenderId) ?? tender.summary ?? null
+  );
+
+  // Effect to sync with prop/cache if needed
+  useEffect(() => {
+    const cachedSummary = aiSummariesMap.get(tenderId);
+    const propSummary = tender.summary ?? null;
+
+    // If cache exists, it's the source of truth unless the prop is newer AND different
+    if (cachedSummary !== undefined) {
+        if (cachedSummary !== displaySummary) {
+             console.log(`[TenderDetailsCard] Updating displaySummary from CACHE:`, cachedSummary);
+             setDisplaySummary(cachedSummary);
+        }
+    // If no cache, use the prop value if it's different from current display
+    } else if (propSummary !== displaySummary) {
+       console.log(`[TenderDetailsCard] Updating displaySummary from PROP (no cache):`, propSummary);
+       setDisplaySummary(propSummary);
+       // Optionally update the cache if the prop has a value and cache doesn't
+       // if (propSummary !== null) {
+       //    updateAISummaryInCache(tenderId, propSummary);
+       // }
+    }
+  }, [tenderId, tender.summary, aiSummariesMap, displaySummary, updateAISummaryInCache]);
+
+  // --- Callback to refresh summary ---
+  const refreshSummary = useCallback(async () => {
+    if (!tenderId) return;
+    console.log(`[TenderDetailsCard] Refreshing summary for tender ID: ${tenderId}`);
+    try {
+      const metadataResponse = await apiClient.get<AIDocumentMetadata>(`/tenders/ai_documents/${tenderId}`);
+      const latestSummary = metadataResponse.data?.summary ?? null; // Ensure null if undefined
+
+      // Update local state only if changed
+      if (latestSummary !== displaySummary) {
+          console.log("[TenderDetailsCard] Fetched new summary, updating local state:", latestSummary);
+          setDisplaySummary(latestSummary);
+      } else {
+           console.log("[TenderDetailsCard] Fetched summary is the same as current display state.");
+      }
+
+      // Update context cache regardless (to ensure it's up-to-date)
+      console.log("[TenderDetailsCard] Updating context cache with fetched summary:", latestSummary);
+      updateAISummaryInCache(tenderId, latestSummary);
+
+    } catch (error) {
+      console.error("[TenderDetailsCard] Error fetching latest summary:", error);
+    }
+  }, [tenderId, displaySummary, updateAISummaryInCache]); // Add context updater to dependencies
+
   // No need for local state - use the parent function directly
   const isSaved = isTenderSaved(tenderId);
   
@@ -63,38 +127,6 @@ const TenderDetailsCard = ({
   const hasAiSummary = !!(tender.aiSummary && tender.aiSummary.trim() !== '');
   const hasAiDocument = !!(tender.aiDocument && tender.aiDocument.trim() !== '');
   
-  // Function to request AI summary for the tender
-  const requestAISummary = async () => {
-    if (!tender.id || !tender.uri) return;
-    
-    setIsRequestingAI(true);
-    try {
-      console.log(`[AI-DEBUG] Requesting AI summary for tender ID: ${tender.id}, URI: ${tender.uri}`);
-      
-      // Call the request function from tenderService
-      const response = await requestTenderSummary(tender.id, tender.uri);
-      
-      if (response && response.task_id) {
-        console.log(`[AI-DEBUG] AI summary request initiated with task ID: ${response.task_id}`);
-        toast({
-          title: t('aiSummary.requested', "AI Summary Requested"),
-          description: t('aiSummary.generating', "We're generating an AI summary for this tender. Please check back later."),
-        });
-      } else {
-        throw new Error("Invalid response format from API");
-      }
-    } catch (error) {
-      console.error("[AI-DEBUG] Error requesting AI summary:", error);
-      toast({
-        title: t('aiSummary.requestFailed', "Request Failed"),
-        description: t('aiSummary.requestFailedDescription', "Failed to request AI summary. Please try again later."),
-        variant: "destructive"
-      });
-    } finally {
-      setIsRequestingAI(false);
-    }
-  };
-  
   return (
     <Card className="overflow-hidden shadow-md border-gray-200 dark:border-gray-700">
       <CardContent className="p-0">
@@ -121,35 +153,14 @@ const TenderDetailsCard = ({
             onToggleSave={toggleSaveTender}
             getStatusClass={getStatusClass}
             documents={documents}
+            onTaskComplete={refreshSummary}
           />
         </div>
         
         {/* Content */}
         <div className="p-6 space-y-6">
-          {/* AI Summary Section */}
-          {hasAiSummary ? (
-            <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
-              <h3 className="text-base font-medium mb-3 flex items-center text-blue-700 dark:text-blue-300">
-                <Sparkles className="h-4 w-4 mr-2" />
-                <span>{t('aiSummary.title', 'AI-Generated Summary')}</span>
-              </h3>
-              <p className="text-sm">{tender.aiSummary}</p>
-            </div>
-          ) : (
-            <div className="p-4 border border-dashed border-gray-300 rounded-lg bg-gray-50 dark:bg-gray-800 dark:border-gray-700">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <Sparkles className="h-5 w-5 text-gray-400 mr-2" />
-                  <h3 className="text-lg font-medium text-gray-500 dark:text-gray-400">{t('aiSummary.title', "AI Summary")}</h3>
-                </div>
-              </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                {isSaved
-                  ? t('aiSummary.clickToGenerate')
-                  : t('aiSummary.notAvailable')}
-              </p>
-            </div>
-          )}
+          {/* AI Summary Section using AISummary component and local state */}
+          <AISummary aiSummary={displaySummary || ''} />
           
           {/* Main Accordion */}
           <Accordion type="multiple" defaultValue={["details", "values", "timeline"]}>

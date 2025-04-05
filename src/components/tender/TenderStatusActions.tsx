@@ -12,6 +12,7 @@ interface TenderStatusActionsProps {
   getStatusClass: (status: string) => string;
   status?: string;
   documents?: Array<{ id: string; title: string; access_url?: string; content?: string }>;
+  onTaskComplete?: () => void;
 }
 
 const TenderStatusActions = ({ 
@@ -20,7 +21,8 @@ const TenderStatusActions = ({
   onToggleSave,
   getStatusClass,
   status = '',
-  documents = []
+  documents = [],
+  onTaskComplete
 }: TenderStatusActionsProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [processingAI, setProcessingAI] = useState(false);
@@ -83,12 +85,13 @@ const TenderStatusActions = ({
           title: "AI Summary Ready",
           description: "The AI summary has been generated successfully.",
         });
-        
-        // Optionally, you could trigger a refresh of the parent component
-        // to show the new AI summary
-        if (onToggleSave) {
-          onToggleSave(tenderId); // This could be used to trigger a refresh
+
+        // Trigger the refresh callback in the parent component
+        if (onTaskComplete) {
+          console.log("[TenderStatusActions] Calling onTaskComplete callback.");
+          onTaskComplete(); 
         }
+
       } else if (response.status === 'failed') {
         console.log(`[AI-DEBUG] Task failed: ${id}`, response.error);
         
@@ -135,10 +138,10 @@ const TenderStatusActions = ({
           // Map fetched documents to expected format
           documentsToUse = fetchedDocuments.map(doc => {
             const mappedDoc = {
-              document_id: doc.id || doc.document_id || tenderId,
-              url: doc.access_url || doc.url || tenderId,
-              title: doc.title || "Tender Document",
-              document_type: doc.document_type || "procurement"
+              document_id: doc.id || doc.document_id || '',
+              url: doc.access_url || doc.url || '',
+              title: doc.title || '',
+              document_type: doc.document_type || ''
             };
             console.log(`[AI-DEBUG] Mapped document: ${JSON.stringify(mappedDoc)}`);
             return mappedDoc;

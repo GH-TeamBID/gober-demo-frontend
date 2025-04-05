@@ -103,5 +103,10 @@
       "type": "Type",
       "category": "Category"
     }
+  },
+  "aiSummary": {
+    "title": "AI Summary",
+    "noSummary": "No AI summary available for this tender.",
+    "wordCount": "{{count}} words"
   }
 } 

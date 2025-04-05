@@ -103,5 +103,10 @@
       "type": "Tipo",
       "category": "Categoría"
     }
+  },
+  "aiSummary": {
+    "title": "Resumen IA",
+    "noSummary": "No hay resumen IA disponible para esta licitación.",
+    "wordCount": "{{count}} palabras"
   }
 }

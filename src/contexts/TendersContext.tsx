@@ -27,6 +27,7 @@ interface TendersContextType {
   hasMore: boolean;
   sort: SortState;
   savedTenderIds: Set<string>;
+  aiSummariesMap: Map<string, string | null>;
   
   // Tender Detail functionality
   currentTenderDetail: TenderDetail | null;
@@ -45,10 +46,11 @@ interface TendersContextType {
   loadTenders: (params: TenderParams, replace?: boolean) => Promise<void>;
   loadMore: () => Promise<void>;
   refreshTenders: () => Promise<void>;
-  refreshSavedTenders: () => Promise<void>;
+  refreshSavedTenders: (fetchPreviews?: boolean) => Promise<void>;
   toggleSaveTender: (tenderId: string) => Promise<void>;
   setViewMode: (mode: 'all' | 'saved') => void;
   setSort: (sort: SortState) => void;
+  updateAISummaryInCache: (tenderId: string, summary: string | null) => void;
   
   // Filters
   currentParams: TenderParams;
@@ -74,6 +76,7 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   const [savedTenders, setSavedTenders] = useState<TenderPreview[]>([]);
   const [savedTenderIds, setSavedTenderIds] = useState<Set<string>>(new Set());
   const [tenderDetailsMap, setTenderDetailsMap] = useState<Map<string, TenderPreview>>(new Map());
+  const [aiSummariesMap, setAiSummariesMap] = useState<Map<string, string | null>>(new Map());
   const [totalTenders, setTotalTenders] = useState(0);
   const [currentOffset, setCurrentOffset] = useState(0);
   const [limit, setLimit] = useState(DEFAULT_LIMIT);
@@ -100,6 +103,16 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
     // Merge defaults with any provided initialParams
     return { ...defaults, ...initialParams }; 
   });
+  
+  // Function to update the summary cache
+  const updateAISummaryInCache = useCallback((tenderId: string, summary: string | null) => {
+    setAiSummariesMap(prevMap => {
+      const newMap = new Map(prevMap);
+      console.log(`[CONTEXT_CACHE] Updating summary cache for ${tenderId}:`, summary);
+      newMap.set(tenderId, summary);
+      return newMap;
+    });
+  }, []);
   
   // Function to load tenders based on params
   const loadTenders = useCallback(async (params: TenderParams, replace: boolean = false) => {
@@ -249,8 +262,8 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   }, [updateParams]);
   
   // Function to refresh saved tenders
-  const refreshSavedTenders = useCallback(async () => {
-    console.log('💾 SAVED: Refreshing saved tenders list...');
+  const refreshSavedTenders = useCallback(async (fetchPreviews: boolean = true) => {
+    console.log(`💾 SAVED: Refreshing saved tenders list... (Fetch Previews: ${fetchPreviews})`);
     try {
       setIsLoading(true);
       setError(null);
@@ -272,7 +285,7 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
       // Find tenders we need to fetch details for
       const tendersToFetch = savedUris.filter(uri => !currentDetailsMap.has(uri));
       
-      if (tendersToFetch.length > 0) {
+      if (fetchPreviews && tendersToFetch.length > 0) {
         console.log(`💾 SAVED: Fetching details for ${tendersToFetch.length} saved tenders`);
         
         // Fetch details for each tender
@@ -300,7 +313,7 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
         setTenderDetailsMap(currentDetailsMap);
       }
       
-      // Create array of saved tenders from the map
+      // Create array of saved tenders from the map (only if previews were fetched or already existed)
       const updatedSavedTenders = savedUris.map(uri => {
         const tender = currentDetailsMap.get(uri);
         if (tender) {
@@ -333,15 +346,15 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
         variant: "destructive",
       });
     } finally {
-      // Decide if saved tender refresh should affect main loading indicator
-      // Maybe use a separate loading state for saved tenders?
-      // For now, let's keep it simple:
-      // setIsLoading(false); 
+      setIsLoading(false);
     }
   }, [tenderDetailsMap]);
   
   // Function to toggle saved state of a tender
   const toggleSaveTender = useCallback(async (tenderId: string) => {
+    console.log(`💾 CONTEXT: toggleSaveTender called for tenderId: ${tenderId}. Current saved IDs:`, savedTenderIds);
+    console.trace("toggleSaveTender trace");
+
     console.log(`💾 SAVED: Toggling save for tender: ${tenderId}`);
     try {
       const isSaved = savedTenderIds.has(tenderId);
@@ -375,6 +388,8 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
         ? await unsaveTender(tenderId)
         : await saveTender(tenderId);
       
+      console.log(`💾 CONTEXT: API call for ${isSaved ? 'unsave' : 'save'} ${success ? 'succeeded' : 'failed'} for tenderId: ${tenderId}`);
+
       if (!success) {
         // API call failed
         console.error(`💾 SAVED: API call failed for ${isSaved ? 'unsave' : 'save'} tender ${tenderId}.`);
@@ -513,8 +528,8 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   
   // Load initial saved tenders on mount
   useEffect(() => {
-    console.log("CONTEXT INIT: Performing initial saved tenders load");
-    refreshSavedTenders();
+    console.log("CONTEXT INIT: Performing initial saved tenders load (IDs only)");
+    refreshSavedTenders(false); // Pass false to skip preview fetching initially
   }, [refreshSavedTenders]);
   
   // Context value
@@ -528,6 +543,7 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
     hasMore,
     sort,
     savedTenderIds,
+    aiSummariesMap,
     
     // Tender Detail
     currentTenderDetail,
@@ -550,6 +566,7 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
     toggleSaveTender,
     setViewMode,
     setSort,
+    updateAISummaryInCache,
     
     // Filters
     currentParams,
