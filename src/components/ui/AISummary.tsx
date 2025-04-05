@@ -1,6 +1,7 @@
 import { Sparkles } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useTranslation } from 'react-i18next';
+import ReactMarkdown from 'react-markdown';
 
 interface AISummaryProps {
   aiSummary: string;
@@ -20,9 +21,9 @@ const AISummary = ({ aiSummary }: AISummaryProps) => {
         <span>{t('aiSummary.title')}</span>
       </h3>
       {aiSummary ? (
-        <>
-          <p className="text-sm">{aiSummary}</p>
-        </>
+        <div className="text-sm">
+          <ReactMarkdown>{aiSummary}</ReactMarkdown>
+        </div>
       ) : (
         <p className="text-gray-500 italic text-sm">{t('aiSummary.noSummary')}</p>
       )}

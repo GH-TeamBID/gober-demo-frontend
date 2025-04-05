@@ -11,6 +11,15 @@ import { useTranslation } from 'react-i18next';
 // Configuration constants
 const MIN_LOADING_TIME_MS = 1000;
 
+// Define the structure of a chunk based on the provided JSON
+interface Chunk {
+  text: string;
+  metadata: {
+    chunk_id: string;
+    [key: string]: any; // Other metadata fields
+  };
+}
+
 interface TenderDetailTabsProps {
   tender: TenderDetail;
   isTenderSaved: (id: string) => boolean;
@@ -37,6 +46,7 @@ const TenderDetailTabs = ({
   
   const [isDocumentLoading, setIsDocumentLoading] = useState(false);
   const [markdownContent, setMarkdownContent] = useState<string>("");
+  const [chunkMap, setChunkMap] = useState<Map<string, string>>(new Map()); // State for chunk map
   const abortControllerRef = useRef<AbortController | null>(null);
   const { toast } = useToast();
 
@@ -55,34 +65,52 @@ const TenderDetailTabs = ({
       try {
         setIsDocumentLoading(true);
         setMarkdownContent("");
+        setChunkMap(new Map()); // Reset chunk map
         const startTime = Date.now();
 
-        const response = await apiClient.get<string>(
+        // Use the updated backend endpoint that returns both document and chunks in one call
+        const response = await apiClient.get<{ai_document: string, combined_chunks: string}>(
           `/tenders/ai-document-content/${tender.id}`,
           {
-            signal: controller.signal,
-            headers: { 'Accept': 'text/markdown' }
+            signal: controller.signal
           }
         );
 
         if (!isMounted) return;
 
-        const markdownText = response.data;
+        const { ai_document, combined_chunks } = response.data;
 
-        if (markdownText) {
-          setMarkdownContent(markdownText);
+        // Process the response
+        if (ai_document) {
+          setMarkdownContent(ai_document);
 
+          // Parse chunks and create map
+          try {
+            const chunksArray: Chunk[] = JSON.parse(combined_chunks);
+            const newChunkMap = new Map<string, string>();
+            chunksArray.forEach(chunk => {
+              newChunkMap.set(chunk.metadata.chunk_id, chunk.text);
+            });
+            setChunkMap(newChunkMap);
+            console.log(`[TenderDetailTabs] Created chunk map with ${newChunkMap.size} entries.`);
+          } catch (parseError) {
+            console.error("[TenderDetailTabs] Failed to parse chunks JSON:", parseError);
+            toast({ title: "Error Processing Data", description: "Could not process the document chunk information.", variant: "destructive" });
+            // Continue with document display but without chunk references
+          }
+
+          // Handle summary (as before)
           if (tender.summary) {
             onSummaryUpdate(tender.summary);
           } else {
-             console.warn("[TenderDetailTabs] Summary not found in tender object.");
-             onSummaryUpdate(null);
+            console.warn("[TenderDetailTabs] Summary not found in tender object.");
+            onSummaryUpdate(null);
           }
 
         } else {
-            console.warn("[TenderDetailTabs] Proxy returned empty content.");
-            setMarkdownContent(t('aiDocument.notFound', "AI document not available for this tender."));
-             onSummaryUpdate(null);
+          console.warn("[TenderDetailTabs] Proxy returned empty content.");
+          setMarkdownContent(t('aiDocument.notFound', "AI document not available for this tender."));
+          onSummaryUpdate(null);
         }
 
         const elapsedTime = Date.now() - startTime;
@@ -171,6 +199,7 @@ const TenderDetailTabs = ({
               aiDocument={markdownContent}
               onSave={handleSaveAIDocument}
               documentUrl={null}
+              chunkMap={chunkMap}
             />
           )}
         </TabsContent>
