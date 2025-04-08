@@ -163,7 +163,7 @@ const TenderDetailContent = () => {
                 <div className="mt-4">
                   <Button
                     variant="outline"
-                    onClick={() => navigate('/tenders')}
+                    onClick={() => navigate('/')}
                   >
                     Return to Tenders List
                   </Button>
