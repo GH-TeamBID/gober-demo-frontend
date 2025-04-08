@@ -131,7 +131,7 @@ const TenderDetailContent = () => {
   };
 
   // Store the translated return text to avoid type issues
-  const returnToListText = tCommon('return', 'Return to Tenders List');
+  const returnToListText = tCommon('returnToList', 'Return to Tenders List');
 
   // Show loading state
   if (loading) {
