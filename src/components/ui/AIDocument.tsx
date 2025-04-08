@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import ReactMarkdown from 'react-markdown';
+import { t } from 'i18next';
 
 // Custom tooltip component with markdown support and adaptive positioning
 interface ChunkTooltipProps {
@@ -393,7 +394,7 @@ const AIDocument = ({
       </CardHeader>
       <CardContent>
         <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-          This document supports Markdown formatting for detailed tender analysis.
+          {t('ui.markdown_support', 'This document supports Markdown formatting for detailed tender analysis.')}
         </div>
         {isEditing ? (
           <Textarea 

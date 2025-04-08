@@ -108,5 +108,6 @@
     "title": "AI Summary",
     "noSummary": "No AI summary available for this tender.",
     "wordCount": "{{count}} words"
-  }
+  },
+  "markdown_support": "This document supports Markdown formatting for detailed tender analysis."
 } 

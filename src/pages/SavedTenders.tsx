@@ -90,7 +90,7 @@ const SavedTendersContent = () => {
           <div className="text-center py-16">
             <div className="text-lg font-medium mb-4">{t('tenderList.noSavedTenders')}</div>
             <p className="text-gray-600 dark:text-gray-400 mb-8">
-              {t('tenderList.noSavedTendersDescription')}
+              {t('tenderList.noSavedTenders')}
             </p>
             <Link to="/">
               <Button variant="outline" className="flex items-center gap-2">

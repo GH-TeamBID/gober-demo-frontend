@@ -124,20 +124,16 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
       ...params // params passed in take precedence
     };
     
-    console.log(`📡 LOAD: Fetching tenders with params: ${JSON.stringify(queryParams)} (Replace=${replace})`);
     setIsLoading(true);
     setError(null);
     
     try {
       const response = await fetchTenders(queryParams);
-      console.log(`📡 LOAD: API response received. Total: ${response.total}, Offset: ${response.offset}, Limit: ${response.limit}, has_next: ${response.has_next}`);
       
       // Replace or append based on 'replace' flag or if offset is 0
       if (replace || queryParams.offset === 0) {
-        console.log('📡 LOAD: Setting/Replacing tenders state.');
         setTenders(response.items);
       } else {
-        console.log('📡 LOAD: Appending tenders state.');
         // Prevent duplicates when appending (though ideally API wouldn't send duplicates)
         setTenders(prev => {
           const existingIds = new Set(prev.map(t => t.tender_hash));
@@ -160,10 +156,8 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
         limit: response.limit // Reflect the actual limit returned by API
       }));
       
-      console.log(`📡 LOAD: State updated. Total: ${response.total}, Next Offset: ${response.offset + response.items.length}, Limit: ${response.limit}, HasMore: ${response.has_next}`);
       
     } catch (err: any) {
-      console.error('📡 LOAD: Error loading tenders:', err);
       const errorMsg = err.message || 'Failed to load tenders';
       setError(errorMsg);
       toast({
@@ -256,14 +250,12 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   // Function to set the view mode (all vs saved)
   const setViewMode = useCallback((mode: 'all' | 'saved') => {
     const isSavedView = mode === 'saved';
-    console.log(`👁️ VIEW: Setting view mode to '${mode}' (is_saved=${isSavedView})`);
     // Update params triggers a refresh with offset 0 and the new is_saved value
     updateParams({ is_saved: isSavedView });
   }, [updateParams]);
   
   // Function to refresh saved tenders
   const refreshSavedTenders = useCallback(async (fetchPreviews: boolean = true) => {
-    console.log(`💾 SAVED: Refreshing saved tenders list... (Fetch Previews: ${fetchPreviews})`);
     try {
       setIsLoading(true);
       setError(null);
@@ -286,7 +278,6 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
       const tendersToFetch = savedUris.filter(uri => !currentDetailsMap.has(uri));
       
       if (fetchPreviews && tendersToFetch.length > 0) {
-        console.log(`💾 SAVED: Fetching details for ${tendersToFetch.length} saved tenders`);
         
         // Fetch details for each tender
         const fetchPromises = tendersToFetch.map(async (uri) => { // Changed from hash to uri
@@ -294,7 +285,6 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
             const tenderPreview = await fetchTenderPreviewById(uri); // Changed from hash to uri
             return { id: uri, details: tenderPreview, success: true }; // Changed from hash to uri
           } catch (err) {
-            console.error(`💾 SAVED: Failed to fetch preview for tender ${uri}:`, err); // Changed from hash to uri
             return { id: uri, details: null, success: false }; // Changed from hash to uri
           }
         });
@@ -335,7 +325,6 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
       
       // Update saved tenders state
       setSavedTenders(updatedSavedTenders);
-      console.log(`💾 SAVED: Finished refreshing saved tenders. Count: ${updatedSavedTenders.length}`);
       
     } catch (err: any) {
       const errorMsg = err.message || 'Failed to load saved tenders';
@@ -352,14 +341,9 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   
   // Function to toggle saved state of a tender
   const toggleSaveTender = useCallback(async (tenderId: string) => {
-    console.log(`💾 CONTEXT: toggleSaveTender called for tenderId: ${tenderId}. Current saved IDs:`, savedTenderIds);
-    console.trace("toggleSaveTender trace");
 
-    console.log(`💾 SAVED: Toggling save for tender: ${tenderId}`);
     try {
-      const isSaved = savedTenderIds.has(tenderId);
-      console.log(`💾 SAVED: Tender ${tenderId} is currently ${isSaved ? 'saved' : 'not saved'}. Action: ${isSaved ? 'Unsaving' : 'Saving'}`);
-      
+      const isSaved = savedTenderIds.has(tenderId);     
       // Optimistic update
       const newSavedIds = new Set(savedTenderIds);
       if (isSaved) {
@@ -378,7 +362,6 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
         if (tenderDetails) {
           setSavedTenders(prev => [...prev, tenderDetails]);
         } else {
-            console.warn(`💾 SAVED: Cannot add tender ${tenderId} to saved list optimistically - details not found.`);
             // Consider fetching details here if needed immediately
         }
       }
@@ -388,16 +371,13 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
         ? await unsaveTender(tenderId)
         : await saveTender(tenderId);
       
-      console.log(`💾 CONTEXT: API call for ${isSaved ? 'unsave' : 'save'} ${success ? 'succeeded' : 'failed'} for tenderId: ${tenderId}`);
 
       if (!success) {
         // API call failed
-        console.error(`💾 SAVED: API call failed for ${isSaved ? 'unsave' : 'save'} tender ${tenderId}.`);
         throw new Error('Failed to update saved status via API');
       }
       
       // Success
-      console.log(`💾 SAVED: Successfully ${isSaved ? 'unsaved' : 'saved'} tender ${tenderId} via API.`);
       toast({
         description: isSaved
           ? "Tender removed from favorites"
@@ -406,7 +386,6 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
       });
       
     } catch (error: any) {
-      console.error(`💾 SAVED: Error toggling save for tender ${tenderId}:`, error);
       
       // Revert the optimistic update by refreshing
       // This is crucial to ensure UI consistency

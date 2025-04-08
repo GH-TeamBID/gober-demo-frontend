@@ -227,7 +227,6 @@ export interface UserTender {
  */
 export async function fetchTenders(params: TenderParams = {}): Promise<PaginatedTenderResponse> {
   try {
-    console.log('📡 NETWORK: fetchTenders called with params:', JSON.stringify(params, null, 2));
     
     // Create a clean object with only defined parameters for URL query
     const apiParams: Record<string, any> = {};
@@ -310,11 +309,7 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
       url += `?${queryString}`;
     }
     
-    console.log('📡 NETWORK: Making API request to:', url);
-    console.log('📡 NETWORK: Request body:', JSON.stringify(requestBody)); // Stringify for better logging
-    
     // Make the API request
-    console.time('🕒 API Request Time');
     let response;
     // Always use POST if filters are present, GET otherwise (matching backend)
     if (Object.keys(requestBody).length > 0) {
@@ -322,24 +317,6 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
     } else {
       response = await apiClient.get<PaginatedTenderResponse>(url);
     }
-    console.timeEnd('🕒 API Request Time');
-    
-    // Log the response structure with offset/limit
-    console.log(`📡 NETWORK: Fetched ${response.data.items.length} tenders from API. Response:`, {
-      items: response.data.items.length,
-      total: response.data.total,
-      offset: response.data.offset,
-      limit: response.data.limit,
-      has_next: response.data.has_next,
-      has_prev: response.data.has_prev // Should be calculated based on offset
-    });
-    
-    if (response.data.debug) {
-      console.log('📡 NETWORK: Debug info from API:', response.data.debug);
-    }
-    
-    // Ensure has_prev calculation is correct based on offset (API already provides this)
-    // response.data.has_prev = response.data.offset > 0;
     
     return response.data;
 
