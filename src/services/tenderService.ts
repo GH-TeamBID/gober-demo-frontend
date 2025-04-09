@@ -347,9 +347,6 @@ export async function fetchTenderDetail(tenderId: string): Promise<TenderDetail>
     // Extract data from the response
     const rawTenderDetail = response.data.data;
     
-    // Add this log:
-    console.log("[fetchTenderDetail_DEBUG] Raw data from backend:", JSON.stringify(rawTenderDetail, null, 2));
-    
     // Process and enrich the data
     const enrichedDetail: TenderDetail = {
       ...rawTenderDetail,
@@ -652,6 +649,22 @@ export async function saveAIDocument(tenderId: string, document: string): Promis
     return true;
   } catch (error) {
     console.error(`Error saving AI document for tender ${tenderId}:`, error);
+    return false;
+  }
+}
+
+export async function updateTenderStatus(tenderId: string, status: string): Promise<boolean> {
+  try {
+    const response = await apiClient.put(`/tenders/status/${tenderId}`, {
+      status
+    });
+    
+    if (response.status === 200) {
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error('Error updating tender status:', error);
     return false;
   }
 }

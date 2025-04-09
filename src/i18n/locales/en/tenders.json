@@ -131,7 +131,8 @@
     "saved": "Document Saved",
     "savedMessage": "The AI document has been saved successfully.",
     "error": "Save Error",
-    "errorSaving": "An error occurred while saving the AI document."
+    "errorSaving": "An error occurred while saving the AI document.",
+    "generating": "We're generating an AI document for this tender. Please check back later."
   },
   "common": {
     "download": "Download",

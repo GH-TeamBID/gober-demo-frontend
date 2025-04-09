@@ -10,6 +10,7 @@ import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 import { TendersProvider, useTenders } from '@/contexts/TendersContext';
 import TenderStatusBadge from '@/components/ui/TenderStatusBadge';
+import { mapTenderStatus } from '@/utils/tenderStatusMapper';
 
 // Function to get status class for styling purposes
 const getStatusClass = (status: string) => {
@@ -185,9 +186,6 @@ const TenderDetailContent = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('tenderDetail.backToTenders', 'Back to Tenders')}
           </Link>
-          <div className="flex flex-wrap items-center gap-4 mt-4">
-            <TenderStatusBadge status={tender.status} size="lg" />
-          </div>
         </div>
 
         <TenderDetailTabs 

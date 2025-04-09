@@ -88,6 +88,14 @@ const TenderResults = ({
       </div>;
   }
   
+  // Log all tender statuses in the listing
+  console.log('[TenderResults] Tenders with statuses:', 
+    tenders.map(tender => ({
+      id: tender.tender_id,
+      status: tender.status
+    }))
+  );
+  
   return <>
       {/* Column Headers */}
       <div className="hidden md:grid grid-cols-12 gap-4 px-4 bg-gray-50 dark:bg-gober-primary-800/50 rounded-t-lg mb-1 py-[14px] text-bold">

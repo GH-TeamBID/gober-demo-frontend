@@ -9,8 +9,6 @@ interface TenderStatusActionsProps {
   tenderId: string;
   isSaved: boolean;
   onToggleSave?: (id: string) => void;
-  getStatusClass: (status: string) => string;
-  status?: string;
   documents?: Array<{ id: string; title: string; access_url?: string; content?: string }>;
   onTaskComplete?: () => void;
 }
@@ -19,8 +17,6 @@ const TenderStatusActions = ({
   tenderId, 
   isSaved, 
   onToggleSave,
-  getStatusClass,
-  status = '',
   documents = [],
   onTaskComplete
 }: TenderStatusActionsProps) => {
@@ -266,9 +262,6 @@ const TenderStatusActions = ({
 
   return (
     <div className="flex items-center gap-2">
-      <span className={`status-badge ${getStatusClass(status)}`}>
-        {status}
-      </span>
       {processingAI && (
         <div className="flex items-center text-xs text-gober-accent-500">
           <Loader2 className="h-3 w-3 mr-1 animate-spin" />

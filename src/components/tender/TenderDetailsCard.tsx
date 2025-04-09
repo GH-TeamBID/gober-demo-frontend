@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { useState, useEffect, useCallback } from 'react';
 import AISummary from '../ui/AISummary';
 import { useTenders } from '@/contexts/TendersContext';
+import TenderStatusBadge from '../ui/TenderStatusBadge';
 
 // Interface for the metadata endpoint response
 interface AIDocumentMetadata {
@@ -36,8 +37,6 @@ const TenderDetailsCard = ({
   documents
 }: TenderDetailsCardProps) => {
   const { t } = useTranslation('tenders');
-  const { t: tCommon } = useTranslation('common');
-  const { toast } = useToast();
   
   // --- Get context data ---
   const { aiSummariesMap, updateAISummaryInCache } = useTenders();
@@ -141,9 +140,7 @@ const TenderDetailsCard = ({
               {tender.title}
             </h2>
             {tender.status && (
-              <Badge className={getStatusClass(tender.status || 'unknown')}>
-                {tender.status}
-              </Badge>
+              <TenderStatusBadge status={tender.status} size='sm'/>
             )}
           </div>
           

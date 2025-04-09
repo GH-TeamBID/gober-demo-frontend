@@ -131,7 +131,8 @@
     "saved": "Documento Guardado",
     "savedMessage": "El documento IA se ha guardado correctamente.",
     "error": "Error al Guardar",
-    "errorSaving": "Ocurrió un error al guardar el documento IA."
+    "errorSaving": "Ocurrió un error al guardar el documento IA.",
+    "generating": "Estamos generando un documento IA para esta licitación. Por favor, vuelve más tarde."
   },
   "common": {
     "download": "Descargar",
