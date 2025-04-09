@@ -31,7 +31,7 @@
       "result": "Result"
     },
     "date": {
-      "title": "Date Range",
+      "title": "Submission DateRange",
       "from": "From",
       "to": "To",
       "pickDate": "Pick a date"

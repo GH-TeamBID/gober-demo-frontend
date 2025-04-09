@@ -31,7 +31,7 @@
       "result": "Resultado"
     },
     "date": {
-      "title": "Rango de Fechas",
+      "title": "Rango de fecha de entrega",
       "from": "Desde",
       "to": "Hasta",
       "pickDate": "Seleccionar fecha"
