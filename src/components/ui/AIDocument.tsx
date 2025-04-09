@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import ReactMarkdown from 'react-markdown';
-import { t } from 'i18next';
+import { useTranslation } from 'react-i18next';
 
 // Custom tooltip component with markdown support and adaptive positioning
 interface ChunkTooltipProps {
@@ -23,7 +23,7 @@ interface ChunkTooltipProps {
 const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef }: ChunkTooltipProps) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [placement, setPlacement] = useState<string>('top');
-  
+
   useEffect(() => {
     if (isVisible && tooltipRef.current && containerRef.current) {
       const tooltip = tooltipRef.current;
@@ -140,6 +140,7 @@ const AIDocument = ({
   const [isEditing, setIsEditing] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation('ui');
   
   // Effect to update document state when prop changes
   useEffect(() => {
@@ -383,18 +384,18 @@ const AIDocument = ({
   return (
     <Card className="shadow-md border-gray-200 dark:border-gray-700 overflow-hidden">
       <CardHeader className="pb-3 flex flex-row items-center justify-between">
-        <CardTitle className="text-xl">AI Document</CardTitle>
+        <CardTitle className="text-xl">{t('aiSummary.title', 'AI Document')}</CardTitle>
         <Button variant="ghost" size="sm" className="flex items-center gap-1" onClick={toggleEditMode}>
           {isEditing ? (
-            <><Check className="h-4 w-4" /><span>Done</span></>
+            <><Check className="h-4 w-4" /><span>{t('aiSummary.done', 'Done')}</span></>
           ) : (
-            <><Edit className="h-4 w-4" /><span>Edit</span></>
+            <><Edit className="h-4 w-4" /><span>{t('aiSummary.edit', 'Edit')}</span></>
           )}
         </Button>
       </CardHeader>
       <CardContent>
         <div className="text-sm text-gray-500 dark:text-gray-400 mb-2">
-          {t('ui.markdown_support', 'This document supports Markdown formatting for detailed tender analysis.')}
+          {t('aiSummary.markdown_support')}
         </div>
         {isEditing ? (
           <Textarea 

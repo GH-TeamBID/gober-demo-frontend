@@ -10,6 +10,8 @@ import { useTranslation } from 'react-i18next';
 
 // Configuration constants
 const MIN_LOADING_TIME_MS = 1000;
+const POLL_INTERVAL_MS = 5000; // 5 seconds between polls
+const MAX_POLL_ATTEMPTS = 12; // 1 minute total polling time
 
 // Define the structure of a chunk based on the provided JSON
 interface Chunk {
@@ -42,125 +44,176 @@ const TenderDetailTabs = ({
   onSummaryUpdate
 }: TenderDetailTabsProps) => {
   const { t } = useTranslation('tenders');
-  const { t: tCommon } = useTranslation('common');
   
   const [isDocumentLoading, setIsDocumentLoading] = useState(false);
   const [markdownContent, setMarkdownContent] = useState<string>("");
-  const [chunkMap, setChunkMap] = useState<Map<string, string>>(new Map()); // State for chunk map
+  const [chunkMap, setChunkMap] = useState<Map<string, string>>(new Map());
   const abortControllerRef = useRef<AbortController | null>(null);
+  const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const pollAttemptsRef = useRef<number>(0);
   const { toast } = useToast();
 
   const ERROR_MESSAGE = t('aiDocument.errorLoading', "Error loading AI document content. Please try again later.");
+  const GENERATING_MESSAGE = t('aiDocument.generating', "AI document is being generated. Please wait...");
+
+  // Function to clear polling interval
+  const clearPolling = () => {
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+    pollAttemptsRef.current = 0;
+  };
+
+  // Function to fetch document content
+  const fetchDocumentContent = async (signal: AbortSignal) => {
+    try {
+      const response = await apiClient.get<{ai_document: string, combined_chunks: string}>(
+        `/tenders/ai-document-content/${tender.id}`,
+        { signal }
+      );
+      return response.data;
+    } catch (error: any) {
+      throw error;
+    }
+  };
 
   useEffect(() => {
-    if (!tender || !tender.id) {
-      return;
-    }
+    if (!tender?.id) return;
 
     let isMounted = true;
     abortControllerRef.current = new AbortController();
     const controller = abortControllerRef.current;
 
-    const loadDocumentContentViaProxy = async () => {
+    const loadDocumentContent = async () => {
       try {
         setIsDocumentLoading(true);
-        setMarkdownContent("");
-        setChunkMap(new Map()); // Reset chunk map
         const startTime = Date.now();
 
-        // Use the updated backend endpoint that returns both document and chunks in one call
-        const response = await apiClient.get<{ai_document: string, combined_chunks: string}>(
-          `/tenders/ai-document-content/${tender.id}`,
-          {
-            signal: controller.signal
-          }
-        );
-
+        const data = await fetchDocumentContent(controller.signal);
+        
         if (!isMounted) return;
 
-        const { ai_document, combined_chunks } = response.data;
+        // Process successful response
+        if (data.ai_document) {
+          setMarkdownContent(data.ai_document);
+          clearPolling(); // Clear any existing polling
 
-        // Process the response
-        if (ai_document) {
-          setMarkdownContent(ai_document);
-
-          // Parse chunks and create map
+          // Process chunks
           try {
-            const chunksArray: Chunk[] = JSON.parse(combined_chunks);
+            const chunksArray: Chunk[] = JSON.parse(data.combined_chunks);
             const newChunkMap = new Map<string, string>();
             chunksArray.forEach(chunk => {
               newChunkMap.set(chunk.metadata.chunk_id, chunk.text);
             });
             setChunkMap(newChunkMap);
-            console.log(`[TenderDetailTabs] Created chunk map with ${newChunkMap.size} entries.`);
           } catch (parseError) {
             console.error("[TenderDetailTabs] Failed to parse chunks JSON:", parseError);
-            toast({ title: "Error Processing Data", description: "Could not process the document chunk information.", variant: "destructive" });
-            // Continue with document display but without chunk references
+            toast({ 
+              title: "Error Processing Data", 
+              description: "Could not process the document chunk information.", 
+              variant: "destructive" 
+            });
           }
 
-          // Handle summary (as before)
+          // Update summary if available
           if (tender.summary) {
             onSummaryUpdate(tender.summary);
-          } else {
-            console.warn("[TenderDetailTabs] Summary not found in tender object.");
-            onSummaryUpdate(null);
           }
-
         } else {
-          console.warn("[TenderDetailTabs] Proxy returned empty content.");
-          setMarkdownContent(t('aiDocument.notFound', "AI document not available for this tender."));
-          onSummaryUpdate(null);
+          // If no document and tender is saved, start polling
+          if (isTenderSaved(tender.id) && !pollIntervalRef.current) {
+            console.log("[TenderDetailTabs] No document found for saved tender. Starting polling...");
+            setMarkdownContent(GENERATING_MESSAGE);
+            
+            pollIntervalRef.current = setInterval(() => {
+              if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+                clearPolling();
+                if (isMounted) {
+                  setMarkdownContent("AI document generation timed out. Please try again later.");
+                  toast({ 
+                    title: "Timeout", 
+                    description: "AI document generation timed out. Please try again later.", 
+                    variant: "default" 
+                  });
+                }
+                return;
+              }
+
+              pollAttemptsRef.current += 1;
+              console.log(`[TenderDetailTabs] Polling attempt ${pollAttemptsRef.current}/${MAX_POLL_ATTEMPTS}`);
+              
+              // Attempt to fetch again
+              loadDocumentContent();
+            }, POLL_INTERVAL_MS);
+          } else {
+            setMarkdownContent(t('aiDocument.notFound', "AI document not available for this tender."));
+          }
         }
 
+        // Ensure minimum loading time
         const elapsedTime = Date.now() - startTime;
         if (elapsedTime < MIN_LOADING_TIME_MS) {
           await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME_MS - elapsedTime));
         }
 
       } catch (error: any) {
-         if (error.name === 'AbortError') {
-           return;
-         }
+        if (error.name === 'AbortError') return;
 
-         let errorStatus = error.response?.status;
-         let errorMessage = error.message;
-         if (error.response) {
-             errorMessage = error.response.data?.detail || error.response.statusText || errorMessage;
-             console.error(`Proxy fetch failed! Status: ${errorStatus}. Message: ${errorMessage}`);
+        console.error("[TenderDetailTabs] Error fetching document:", error);
+        
+        if (error.response?.status === 404 && isTenderSaved(tender.id)) {
+          // If 404 and tender is saved, start polling if not already polling
+          if (!pollIntervalRef.current) {
+            setMarkdownContent(GENERATING_MESSAGE);
+            pollIntervalRef.current = setInterval(() => {
+              if (pollAttemptsRef.current >= MAX_POLL_ATTEMPTS) {
+                clearPolling();
+                if (isMounted) {
+                  setMarkdownContent("AI document generation timed out. Please try again later.");
+                  toast({ 
+                    title: "Timeout", 
+                    description: "AI document generation timed out. Please try again later.", 
+                    variant: "default" 
+                  });
+                }
+                return;
+              }
 
-             if (errorStatus === 404) {
-                 toast({ title: "Not Found", description: "The AI document file was not found or could not be retrieved.", variant: "destructive" });
-             } else {
-                  toast({ title: "Error Fetching Document", description: errorMessage, variant: "destructive" });
-             }
-         } else {
-            console.error("[TenderDetailTabs] Proxy fetch failed with no response:", error);
-            toast({ title: "Network Error", description: "Could not connect to the server to fetch the document.", variant: "destructive" });
-         }
-
-         if (isMounted) {
-           setMarkdownContent(ERROR_MESSAGE);
-            onSummaryUpdate(null);
-           await new Promise(resolve => setTimeout(resolve, MIN_LOADING_TIME_MS));
-         }
-      } finally {
-          if (isMounted) {
-            setIsDocumentLoading(false);
+              pollAttemptsRef.current += 1;
+              console.log(`[TenderDetailTabs] Polling attempt ${pollAttemptsRef.current}/${MAX_POLL_ATTEMPTS}`);
+              
+              // Attempt to fetch again
+              loadDocumentContent();
+            }, POLL_INTERVAL_MS);
           }
+        } else {
+          // Handle other errors
+          const errorMessage = error.response?.data?.detail || error.message;
+          setMarkdownContent(ERROR_MESSAGE);
+          toast({ 
+            title: "Error", 
+            description: errorMessage, 
+            variant: "destructive" 
+          });
+        }
+      } finally {
+        if (isMounted) {
+          setIsDocumentLoading(false);
+        }
       }
     };
 
-    loadDocumentContentViaProxy();
+    loadDocumentContent();
 
     return () => {
       isMounted = false;
       if (abortControllerRef.current) {
-        console.log("Aborting fetch request on unmount");
         abortControllerRef.current.abort();
       }
+      clearPolling();
     };
-  }, [tender?.uri, ERROR_MESSAGE, t, onSummaryUpdate, tender?.summary]);
+  }, [tender?.id, isTenderSaved, t, onSummaryUpdate, ERROR_MESSAGE, GENERATING_MESSAGE]);
 
   useEffect(() => {
     if (isDocumentLoading && activeTab === 'document') {
@@ -174,12 +227,13 @@ const TenderDetailTabs = ({
         <TabsList className="mb-6">
           <TabsTrigger value="details">{t('tabs.details', "Tender Details")}</TabsTrigger>
           <TabsTrigger value="document" disabled={isDocumentLoading}>
-            {t('tabs.aiDocument', "AI Document")} {isDocumentLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
+            {t('tabs.aiDocument', "AI Document")} 
+            {isDocumentLoading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
           </TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="details" className="space-y-6">
-          <TenderDetailsCard 
+          <TenderDetailsCard
             tender={tender}
             isTenderSaved={isTenderSaved}
             toggleSaveTender={toggleSaveTender}
@@ -187,7 +241,7 @@ const TenderDetailTabs = ({
             documents={tender.procurement_documents}
           />
         </TabsContent>
-        
+
         <TabsContent value="document">
           {isDocumentLoading ? (
             <div className="flex justify-center items-center min-h-[400px]">
