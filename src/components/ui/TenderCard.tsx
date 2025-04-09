@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import TenderStatusIcon from './TenderStatusIcon';
+import TenderStatusBadge from './TenderStatusBadge';
 import { TenderPreview } from '@/services/tenderService';
 import { SortField } from '@/types/types';
 import { Loader2 } from 'lucide-react';
@@ -343,12 +344,11 @@ const TenderCard = ({
               </div>
             </div>
             
-            {/* Status - No direct mapping in API, using placeholder */}
+            {/* Status - Use our new TenderStatusBadge component */}
             <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:block">
               {showHeaders && <div className="text-xs text-gray-500 mb-1">{t('tenderCard.status')}</div>}
-              <div className="text-sm flex items-center gap-1">
-                <TenderStatusIcon status="Open" />
-                <span>{t('tenderCard.open')}</span>
+              <div className="text-sm flex items-center">
+                <TenderStatusBadge status={tender.status} size="sm" />
               </div>
             </div>
             
@@ -375,8 +375,7 @@ const TenderCard = ({
               </div>
               <div className="flex items-center gap-1">
                 <span className="text-xs text-gray-500">{t('tenderCard.status')}:</span>
-                <TenderStatusIcon status="Open" />
-                <span>{t('tenderCard.open')}</span>
+                <TenderStatusBadge status={tender.status} size="sm" />
               </div>
             </div>
           </div>

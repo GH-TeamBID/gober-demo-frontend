@@ -79,16 +79,16 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
   };
 
   // Truncate text if it's longer than maxChars
-  // We might truncate *after* rendering markdown if complex content causes issues,
-  // but let's try truncating the raw text first for simplicity.
   const truncatedText = text.length > maxChars ? `${text.substring(0, maxChars)}...` : text;
 
   // Define smaller heading components specifically for the tooltip markdown
   const tooltipMarkdownComponents = {
     h1: ({node, ...props}: any) => <h1 className="text-xs font-bold" {...props} />, 
     h2: ({node, ...props}: any) => <h2 className="text-[11px] font-bold" {...props} />, 
-    h3: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
-    // Add other elements if needed, or style paragraphs/lists
+    h3: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />,
+    h4: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
+    h5: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
+    h6: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
     p: ({node, ...props}: any) => <p className="text-[10px] mb-1" {...props} />,
     ul: ({node, ...props}: any) => <ul className="list-disc list-inside text-[10px] mb-1" {...props} />,
     ol: ({node, ...props}: any) => <ol className="list-decimal list-inside text-[10px] mb-1" {...props} />,
@@ -98,11 +98,11 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
   return (
     <div 
       ref={tooltipRef} 
-      // Adjust styling for a more horizontal rectangle shape
       className="bg-gray-800 text-white p-3 rounded shadow-lg text-[10px] min-w-[220px]"
       style={{
         ...getTooltipStyles(),
         maxWidth: '400px',
+        maxHeight: '400px',
         width: 'fit-content'
       }}
     >

@@ -3,7 +3,7 @@ export enum TenderStatus {
   CLOSED = 'Closed',
   PLANNED = 'Under Review',
   AWARDED = 'Awarded',
-  CANCELED = 'Canceled'
+  CANCELLED = 'Canceled'
 }
 
 export interface CPVCode {

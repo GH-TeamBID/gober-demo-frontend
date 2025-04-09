@@ -97,7 +97,7 @@ const TenderResults = ({
         </div>
         
         {/* Title - reduced width */}
-        <div className="col-span-10 sm:col-span-4 md:col-span-3 flex items-center">
+        <div className="col-span-10 sm:col-span-3 md:col-span-2 flex items-center">
           <SortableHeader field="title">{t('tenderResults.columns.title')}</SortableHeader>
         </div>
         
@@ -122,17 +122,22 @@ const TenderResults = ({
         </div>
         
         {/* Location - make sortable */}
-        <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:flex md:items-center">
+        <div className="col-span-4 sm:col-span-1 md:col-span-1 hidden md:flex md:items-center">
           <SortableHeader field="location">{t('tenderResults.columns.location')}</SortableHeader>
         </div>
         
         {/* Contract Type - make sortable */}
-        <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden md:flex md:items-center">
+        <div className="col-span-4 sm:col-span-1 md:col-span-1 hidden md:flex md:items-center">
           <SortableHeader field="contract_type">{t('tenderResults.columns.type')}</SortableHeader>
         </div>
         
+        {/* Status - make sortable */}
+        <div className="col-span-4 sm:col-span-1 md:col-span-1 hidden lg:flex lg:items-center">
+          <SortableHeader field="status">{t('tenderResults.columns.status')}</SortableHeader>
+        </div>
+        
         {/* Category */}
-        <div className="col-span-4 sm:col-span-2 md:col-span-1 hidden lg:flex lg:items-center">
+        <div className="col-span-4 sm:col-span-1 md:col-span-1 hidden lg:flex lg:items-center">
           <span className={nonSortableHeaderClass}>
             {t('tenderResults.columns.category')}
           </span>

@@ -1,24 +1,32 @@
-
 import React from 'react';
-import { AlertCircle, CheckCircle, Clock, Award } from 'lucide-react';
-import { Tender } from '@/types/types';
+import { AlertCircle, CheckCircle, Clock, Award, AlertTriangle, FileCheck, Calendar } from 'lucide-react';
+import { TenderStatus } from '@/types/types';
+import { mapTenderStatus } from '@/utils/tenderStatusMapper';
 
 interface TenderStatusIconProps {
-  status: Tender['status'];
+  status: string | null | undefined;
+  className?: string;
 }
 
-const TenderStatusIcon = ({ status }: TenderStatusIconProps) => {
-  switch (status) {
-    case 'Open':
-      return <CheckCircle className="h-4 w-4 text-green-500" />;
-    case 'Closed':
-      return <AlertCircle className="h-4 w-4 text-red-500" />;
-    case 'Under Review':
-      return <Clock className="h-4 w-4 text-amber-500" />;
-    case 'Awarded':
-      return <Award className="h-4 w-4 text-blue-500" />;
+const TenderStatusIcon = ({ status, className = "h-4 w-4" }: TenderStatusIconProps) => {
+  // Map the status string to our standardized enum
+  const mappedStatus = mapTenderStatus(status);
+
+  switch (mappedStatus) {
+    case TenderStatus.PRIOR_NOTICE:
+      return <Calendar className={`${className} text-amber-500`} />;
+    case TenderStatus.PUBLISHED:
+      return <CheckCircle className={`${className} text-green-500`} />;
+    case TenderStatus.EVALUATION:
+      return <Clock className={`${className} text-blue-500`} />;
+    case TenderStatus.AWARDED:
+      return <Award className={`${className} text-purple-500`} />;
+    case TenderStatus.SOLVED:
+      return <FileCheck className={`${className} text-gray-500`} />;
+    case TenderStatus.CANCELLED:
+      return <AlertTriangle className={`${className} text-red-500`} />;
     default:
-      return null;
+      return <AlertCircle className={`${className} text-gray-400`} />;
   }
 };
 

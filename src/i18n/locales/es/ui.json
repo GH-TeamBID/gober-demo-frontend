@@ -101,8 +101,17 @@
       "budget": "Presupuesto",
       "location": "Ubicación",
       "type": "Tipo",
-      "category": "Categoría"
+      "category": "Categoría",
+      "status": "Estado"
     }
+  },
+  "status": {
+    "priorNotice": "Anuncio Previo",
+    "published": "En Plazo",
+    "evaluation": "En Evaluación",
+    "awarded": "Adjudicada",
+    "solved": "Resuelta",
+    "canceled": "Anulada"
   },
   "aiSummary": {
     "title": "Resumen IA",

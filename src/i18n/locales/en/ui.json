@@ -101,8 +101,17 @@
       "budget": "Budget",
       "location": "Location",
       "type": "Type",
-      "category": "Category"
+      "category": "Category",
+      "status": "Status"
     }
+  },
+  "status": {
+    "priorNotice": "Prior Notice",
+    "published": "Published",
+    "evaluation": "Evaluation",
+    "awarded": "Awarded",
+    "solved": "Solved",
+    "canceled": "Canceled"
   },
   "aiSummary": {
     "title": "AI Summary",

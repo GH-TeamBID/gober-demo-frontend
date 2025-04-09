@@ -32,3 +32,12 @@ export interface SortState {
 export interface ApiResponseToTenderAdapter {
   adaptTender: (apiTender: any) => TenderPreview;
 }
+
+export enum TenderStatus {
+  PRIOR_NOTICE = 'Prior notice',
+  PUBLISHED = 'Published',
+  EVALUATION = 'Evaluation',
+  AWARDED = 'Awarded',
+  SOLVED = 'Solved',
+  CANCELLED = 'Canceled'
+}

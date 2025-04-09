@@ -20,7 +20,8 @@ import {
   AccordionTrigger,
 } from '@/components/ui/accordion';
 
-const STATUSES = ['Open', 'Evaluation', 'Awarded', 'Result'];
+// Update to use our standardized status values from the backend
+const STATUSES = ['Prior notice', 'Published', 'Evaluation', 'Awarded', 'Solved', 'Canceled'];
 
 interface CPVCodeResponse {
   code: string;
@@ -232,10 +233,12 @@ const FilterPanel = ({
   // Get localized status labels
   const getStatusLabel = (status: string) => {
     switch (status) {
-      case 'Open': return t('filterPanel.status.open');
-      case 'Evaluation': return t('filterPanel.status.evaluation');
-      case 'Awarded': return t('filterPanel.status.awarded');
-      case 'Result': return t('filterPanel.status.result');
+      case 'Prior notice': return t('status.priorNotice');
+      case 'Published': return t('status.published');
+      case 'Evaluation': return t('status.evaluation');
+      case 'Awarded': return t('status.awarded');
+    case 'Solved': return t('status.solved');
+      case 'Canceled': return t('status.canceled');
       default: return status;
     }
   };

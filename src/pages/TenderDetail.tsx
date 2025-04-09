@@ -9,6 +9,7 @@ import { useTranslation } from 'react-i18next';
 import { useToast } from '@/components/ui/use-toast';
 import Layout from '@/components/layout/Layout';
 import { TendersProvider, useTenders } from '@/contexts/TendersContext';
+import TenderStatusBadge from '@/components/ui/TenderStatusBadge';
 
 // Function to get status class for styling purposes
 const getStatusClass = (status: string) => {
@@ -17,7 +18,7 @@ const getStatusClass = (status: string) => {
     [TenderStatus.CLOSED]: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-300',
     [TenderStatus.PLANNED]: 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300',
     [TenderStatus.AWARDED]: 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300',
-    [TenderStatus.CANCELED]: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
+    [TenderStatus.CANCELLED]: 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300',
   };
   
   return statusMap[status] || 'bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300';
@@ -184,10 +185,8 @@ const TenderDetailContent = () => {
             <ArrowLeft className="mr-2 h-4 w-4" />
             {t('tenderDetail.backToTenders', 'Back to Tenders')}
           </Link>
-          <div className="flex flex-wrap gap-2 mt-4">
-            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusClass(tender.status || '')}`}>
-              {t(`status.${(tender.status || '').toLowerCase()}`, {defaultValue: tender.status || ''})}
-            </span>
+          <div className="flex flex-wrap items-center gap-4 mt-4">
+            <TenderStatusBadge status={tender.status} size="lg" />
           </div>
         </div>
 
