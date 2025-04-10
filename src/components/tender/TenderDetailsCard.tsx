@@ -145,11 +145,9 @@ const TenderDetailsCard = ({
           </div>
           
           <TenderStatusActions 
-            status={tender.status}
             tenderId={tenderId}
             isSaved={isSaved}
             onToggleSave={toggleSaveTender}
-            getStatusClass={getStatusClass}
             documents={documents}
             onTaskComplete={refreshSummary}
           />

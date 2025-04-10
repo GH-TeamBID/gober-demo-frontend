@@ -11,9 +11,7 @@ const AISummary = ({ aiSummary }: AISummaryProps) => {
   const { t } = useTranslation('ui');
   // Log the received prop value
   console.log("[AISummary] Rendering with aiSummary:", aiSummary);
-  
-  const wordCount = aiSummary.trim().split(/\s+/).filter(Boolean).length;
-  
+    
   return (
     <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-100 dark:border-blue-900/50">
       <h3 className="text-base font-medium mb-3 flex items-center text-blue-700 dark:text-blue-300">
