@@ -21,7 +21,7 @@ interface ChunkTooltipProps {
 }
 
 const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef }: ChunkTooltipProps) => {
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLSpanElement>(null);
   const [placement, setPlacement] = useState<string>('top');
 
   useEffect(() => {
@@ -96,24 +96,24 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
   };
 
   return (
-    <div 
+    <span 
       ref={tooltipRef} 
-      className="bg-gray-800 text-white p-3 rounded shadow-lg text-[10px] min-w-[220px]"
+      className="bg-gray-800 text-white p-3 rounded shadow-lg text-[10px] min-w-[220px] absolute z-50"
       style={{
         ...getTooltipStyles(),
         maxWidth: '400px',
         maxHeight: '400px',
-        width: 'fit-content'
+        width: 'fit-content',
+        display: isVisible ? 'inline-block' : 'none'
       }}
     >
-      <div className="relative markdown-content">
-        <div style={getArrowStyles()}></div>
-        {/* Render the truncated text as Markdown */}
+      <span className="relative markdown-content">
+        <span style={getArrowStyles()}></span>
         <ReactMarkdown components={tooltipMarkdownComponents}>
           {truncatedText}
         </ReactMarkdown>
-      </div>
-    </div>
+      </span>
+    </span>
   );
 };
 
@@ -196,22 +196,12 @@ const AIDocument = ({
       // Recursive helper function to process nodes within the paragraph
       const processNode = (nodeContent: React.ReactNode, keyPrefix: string = 'node'): React.ReactNode[] => {
         if (typeof nodeContent === 'string') {
-          // Apply chunk logic directly to strings found
-          // console.log("Processing text node:", nodeContent); // Remove log
-          
-          // Create a new regex instance for each string segment to ensure fresh state
           const chunksRegex = /\[chunk.*?\]/g; 
           
           const parts: React.ReactNode[] = [];
           let lastIndex = 0;
           let match;
           let partIndex = 0;
-
-          // Remove DEBUG test log
-          /*
-          const testRegex = /\[chunk.*?\]/g; 
-          console.log("Testing regex:", testRegex.source, "on:", nodeContent, "Result:", testRegex.test(nodeContent));
-          */
 
           while ((match = chunksRegex.exec(nodeContent)) !== null) {
             if (match.index > lastIndex) {
@@ -221,8 +211,6 @@ const AIDocument = ({
 
             const chunkReference = match[0];
             const chunkId = chunkReference.replace(/[\[\]]/g, ''); 
-
-            // console.log("Matched chunk:", chunkReference, "Extracted ID:", chunkId, "Exists in map:", chunkMap.has(chunkId)); // Remove log
 
             if (!chunkId) {
               // Push raw string instead of Fragment
