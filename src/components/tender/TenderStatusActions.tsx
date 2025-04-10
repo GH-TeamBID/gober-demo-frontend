@@ -143,15 +143,14 @@ const TenderStatusActions = ({
             return mappedDoc;
           });
         } else {
-          // No documents found from API, use a placeholder
-          console.log(`[AI-DEBUG] No documents found from API, using placeholder for tender ${tenderId}`);
-          documentsToUse = [{
-            document_id: tenderId,
-            url: tenderId,
-            title: "Tender ID",
-            document_type: "reference"
-          }];
-          console.log(`[AI-DEBUG] Created placeholder document: ${JSON.stringify(documentsToUse[0])}`);
+          // No documents found from API either
+          console.log(`[AI-DEBUG] No documents found from API for tender ${tenderId}`);
+          toast({
+            title: "No Documents Available",
+            description: "Unable to generate AI summary - no documents found for this tender.",
+            variant: "destructive",
+          });
+          return null;
         }
       } else {
         // Use documents passed to component, but map to expected format
@@ -168,6 +167,16 @@ const TenderStatusActions = ({
           console.log(`[AI-DEBUG] Mapped passed document: ${JSON.stringify(mappedDoc)}`);
           return mappedDoc;
         });
+      }
+      
+      // Verify we have documents to process
+      if (documentsToUse.length === 0) {
+        toast({
+          title: "No Documents Available",
+          description: "Unable to generate AI summary - no documents found for this tender.",
+          variant: "destructive",
+        });
+        return null;
       }
       
       // Send the request with available documents

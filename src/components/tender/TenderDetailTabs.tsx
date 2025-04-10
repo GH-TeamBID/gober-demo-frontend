@@ -90,6 +90,21 @@ const TenderDetailTabs = ({
         setIsDocumentLoading(true);
         const startTime = Date.now();
 
+        // Check if tender has documents
+        if (!tender.procurement_documents || tender.procurement_documents.length === 0) {
+          if (isTenderSaved(tender.id)) {
+            setMarkdownContent(t('aiDocument.noDocuments', "No documents available for this tender. AI summary cannot be generated."));
+            toast({ 
+              title: "No Documents", 
+              description: "This tender has no attached documents. AI summary cannot be generated.", 
+              variant: "destructive" 
+            });
+          } else {
+            setMarkdownContent(t('aiDocument.notFound', "AI document not available for this tender."));
+          }
+          return;
+        }
+
         const data = await fetchDocumentContent(controller.signal);
         
         if (!isMounted) return;

@@ -372,37 +372,42 @@ export async function fetchTenderDetail(tenderId: string): Promise<TenderDetail>
       submission_date: rawTenderDetail.submission_deadline
     };
     
-    // Try to fetch the AI summary data in parallel
-    try {
-      console.log(`[AI-DEBUG] Fetching AI summary data for tender ID: ${tenderId}, URI: ${enrichedDetail.uri}`);
-      const summaryData = await fetchTenderSummary(tenderId, enrichedDetail.uri);
-      
-      console.log(`[AI-DEBUG] Tender detail URI: ${enrichedDetail.uri}, Tender ID: ${tenderId}`);
-      
-      if (summaryData) {
-        const { tender_uri, summary, url_document } = summaryData;
-        const isUriMatch = tender_uri.split('/').pop() == (enrichedDetail.uri.split('/').pop());
+    // Check if there are documents before fetching AI summary
+    if (rawTenderDetail.procurement_documents && rawTenderDetail.procurement_documents.length > 0) {
+      // Try to fetch the AI summary data in parallel
+      try {
+        console.log(`[AI-DEBUG] Fetching AI summary data for tender ID: ${tenderId}, URI: ${enrichedDetail.uri}`);
+        const summaryData = await fetchTenderSummary(tenderId, enrichedDetail.uri);
         
-        if (isUriMatch) {
-          if (summary?.trim()) {
-            enrichedDetail.aiSummary = summary;
-            console.log(`[AI-DEBUG] AI summary found for tender ${tenderId} (${summary.length} chars)`);
-          } else {
-            console.log(`[AI-DEBUG] No AI summary text available for tender ${tenderId}`);
-          }
+        console.log(`[AI-DEBUG] Tender detail URI: ${enrichedDetail.uri}, Tender ID: ${tenderId}`);
+        
+        if (summaryData) {
+          const { tender_uri, summary, url_document } = summaryData;
+          const isUriMatch = tender_uri.split('/').pop() == (enrichedDetail.uri.split('/').pop());
           
-          if (url_document?.trim()) {
-            enrichedDetail.aiDocument = url_document;
-            console.log(`[AI-DEBUG] AI document URL found for tender ${tenderId}: ${url_document}`);
-          } else {
-            console.log(`[AI-DEBUG] No AI document URL available for tender ${tenderId}`);
+          if (isUriMatch) {
+            if (summary?.trim()) {
+              enrichedDetail.aiSummary = summary;
+              console.log(`[AI-DEBUG] AI summary found for tender ${tenderId} (${summary.length} chars)`);
+            } else {
+              console.log(`[AI-DEBUG] No AI summary text available for tender ${tenderId}`);
+            }
+            
+            if (url_document?.trim()) {
+              enrichedDetail.aiDocument = url_document;
+              console.log(`[AI-DEBUG] AI document URL found for tender ${tenderId}: ${url_document}`);
+            } else {
+              console.log(`[AI-DEBUG] No AI document URL available for tender ${tenderId}`);
+            }
           }
+        } else {
+          console.log(`[AI-DEBUG] No AI content found for tender ${tenderId}`);
         }
-      } else {
-        console.log(`[AI-DEBUG] No AI content found for tender ${tenderId}`);
+      } catch (summaryError) {
+        console.warn(`[AI-DEBUG] Could not fetch AI content for tender ${tenderId}:`, summaryError);
       }
-    } catch (summaryError) {
-      console.warn(`[AI-DEBUG] Could not fetch AI content for tender ${tenderId}:`, summaryError);
+    } else {
+      console.log(`[AI-DEBUG] No documents available for tender ${tenderId}, skipping AI summary request.`);
     }
     
     return enrichedDetail;
@@ -611,7 +616,6 @@ export async function getTenderById(tenderId: string): Promise<TenderDetail | nu
   try {
     return await fetchTenderDetail(tenderId);
   } catch (error) {
-    console.error(`Error fetching tender detail for ${tenderId}:`, error);
     return null;
   }
 }
