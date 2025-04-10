@@ -105,7 +105,7 @@ const TenderResults = ({
         </div>
         
         {/* Title - reduced width */}
-        <div className="col-span-10 sm:col-span-3 md:col-span-2 flex items-center">
+        <div className="col-span-10 sm:col-span-4 md:col-span-3 flex items-center">
           <SortableHeader field="title">{t('tenderResults.columns.title')}</SortableHeader>
         </div>
         
