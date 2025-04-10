@@ -316,7 +316,7 @@ const TenderCard = ({
             {/* Budget */}
             <div className="col-span-4 sm:col-span-2 md:col-span-1">
               {showHeaders && <div className="text-xs text-gray-500 mb-1">Budget</div>}
-              <div className={`text-sm font-medium ${getSortedStyle('budget.amount')}`}>{formatCurrency(tenderAmount, tenderCurrency)}</div>
+              <div className={`text-sm font-medium ${getSortedStyle('budget_amount')}`}>{formatCurrency(tenderAmount, tenderCurrency)}</div>
             </div>
             
             {/* Location */}
@@ -356,7 +356,6 @@ const TenderCard = ({
               tenderId={tenderHash} 
               isSaved={isSaved} 
               onToggleSave={handleSaveToggle} 
-              getStatusClass={getSortedStyle}
             />
           
             {/* Mobile expandable section for additional information */}

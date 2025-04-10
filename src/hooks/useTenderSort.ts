@@ -18,7 +18,7 @@ export const useTenderSort = (tenders: TenderPreview[]) => {
           compareA = a.tender_id;
           compareB = b.tender_id;
           break;
-        case 'budget.amount':
+        case 'budget_amount':
           compareA = a.budget?.amount || 0;
           compareB = b.budget?.amount || 0;
           break;

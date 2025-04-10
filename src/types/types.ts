@@ -19,7 +19,7 @@ export type SortField =
   'submission_date' | 
   'n_lots' | 
   'pub_org_name' | 
-  'budget.amount' | 
+  'budget_amount' |
   'location' | 
   'contract_type';
 export type SortDirection = 'asc' | 'desc';

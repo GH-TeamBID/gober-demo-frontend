@@ -126,7 +126,7 @@ const TenderResults = ({
         
         {/* Budget */}
         <div className="col-span-4 sm:col-span-2 md:col-span-1 flex items-center">
-          <SortableHeader field="budget.amount">{t('tenderResults.columns.budget')}</SortableHeader>
+          <SortableHeader field="budget_amount">{t('tenderResults.columns.budget')}</SortableHeader>
         </div>
         
         {/* Location - make sortable */}
@@ -137,11 +137,6 @@ const TenderResults = ({
         {/* Contract Type - make sortable */}
         <div className="col-span-4 sm:col-span-1 md:col-span-1 hidden md:flex md:items-center">
           <SortableHeader field="contract_type">{t('tenderResults.columns.type')}</SortableHeader>
-        </div>
-        
-        {/* Status - make sortable */}
-        <div className="col-span-4 sm:col-span-1 md:col-span-1 hidden lg:flex lg:items-center">
-          <SortableHeader field="status">{t('tenderResults.columns.status')}</SortableHeader>
         </div>
         
         {/* Category */}

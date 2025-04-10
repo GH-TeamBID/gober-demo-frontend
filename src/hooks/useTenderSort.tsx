@@ -35,7 +35,7 @@ export function useTenderSort(tenders: TenderTypes[]) {
           result = titleA.localeCompare(titleB);
           break;
           
-        case 'budget':
+        case 'budget_amount':
           const budgetA = a.budget?.amount || 0;
           const budgetB = b.budget?.amount || 0;
           result = budgetA - budgetB;

@@ -104,6 +104,12 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
     return { ...defaults, ...initialParams }; 
   });
   
+  // Initialize sort state
+  const [sort, setSortState] = useState<SortState>({
+    field: currentParams.sort_field as SortField,
+    direction: currentParams.sort_direction as SortDirection
+  });
+  
   // Function to update the summary cache
   const updateAISummaryInCache = useCallback((tenderId: string, summary: string | null) => {
     setAiSummariesMap(prevMap => {
@@ -116,13 +122,18 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   
   // Function to load tenders based on params
   const loadTenders = useCallback(async (params: TenderParams, replace: boolean = false) => {
-    // Ensure limit and sort are always included from state/params
+    // Map UI sort fields to backend sort fields if needed
+    let sortField = params.sort_field || currentParams.sort_field;
+    
+    // Ensure limit and sort are always included from params, falling back to state
     const queryParams: TenderParams = {
       limit: limit,
-      sort_field: currentParams.sort_field,
-      sort_direction: currentParams.sort_direction,
-      ...params // params passed in take precedence
+      sort_field: sortField,
+      sort_direction: params.sort_direction || currentParams.sort_direction,
+      ...params // Add all other params (will override the defaults above if provided)
     };
+    
+    console.log(`🔄 LOAD: Fetching tenders with params:`, queryParams);
     
     setIsLoading(true);
     setError(null);
@@ -199,11 +210,10 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
   const updateParams = useCallback((newParams: Partial<TenderParams>) => {
     console.log(`📊 FILTERS: updateParams called with: ${JSON.stringify(newParams)}`);
     
-    const { sort_field, sort_direction, ...otherNewParams } = newParams;
-    
+    // Extract all parameters including sort parameters
     const updatedParams = {
       ...currentParams,
-      ...otherNewParams,
+      ...newParams,
       offset: 0
     };
     
@@ -211,19 +221,27 @@ export function TendersProvider({ children, initialParams }: TendersProviderProp
     setCurrentParams(updatedParams);
     setCurrentOffset(0);
     
+    // If sort parameters were updated, update the sort state too
+    if (newParams.sort_field || newParams.sort_direction) {
+      const newSort: SortState = {
+        field: (newParams.sort_field as SortField) || sort.field,
+        direction: (newParams.sort_direction as SortDirection) || sort.direction
+      };
+      console.log(`📊 FILTERS: Updating sort state to match params: ${JSON.stringify(newSort)}`);
+      setSortState(newSort);
+    }
+    
     loadTenders(updatedParams, true);
-  }, [currentParams, loadTenders]);
+  }, [currentParams, loadTenders, sort]);
   
-  // Initialize sort state AFTER updateParams
-  const [sort, setSortState] = useState<SortState>({
-    field: currentParams.sort_field as SortField,
-    direction: currentParams.sort_direction as SortDirection
-  });
-  
-  // Function to handle sort changes AFTER sort state and updateParams
+  // Function to handle sort changes
   const setSort = useCallback((newSort: SortState) => {
     console.log(`🔄 SORT: Updating sort state to: ${newSort.field} ${newSort.direction}`);
+    // First update local sort state
     setSortState(newSort);
+    
+    // Then update API params to trigger data refresh with new sort
+    console.log(`🔄 SORT: Calling updateParams with sort_field=${newSort.field}, sort_direction=${newSort.direction}`);
     updateParams({ 
       sort_field: newSort.field, 
       sort_direction: newSort.direction 
