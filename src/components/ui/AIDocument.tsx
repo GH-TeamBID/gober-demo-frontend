@@ -3,7 +3,7 @@ import { FileDown, Save, Edit, Check, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import ReactMarkdown from 'react-markdown';
+import ReactMarkdown, { Components } from 'react-markdown';
 import { useTranslation } from 'react-i18next';
 
 // Custom tooltip component with markdown support and adaptive positioning
@@ -15,12 +15,14 @@ interface ChunkTooltipProps {
     top: number;
     left: number;
     bottom: number;
-    right: number; 
+    right: number;
   };
   containerRef: React.RefObject<HTMLDivElement>;
+  hasDocumentLink?: boolean;
+  isPartialInfo?: boolean;
 }
 
-const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef }: ChunkTooltipProps) => {
+const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef, hasDocumentLink = false, isPartialInfo = false }: ChunkTooltipProps) => {
   const tooltipRef = useRef<HTMLSpanElement>(null);
   const [placement, setPlacement] = useState<string>('top');
 
@@ -30,24 +32,24 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
       const container = containerRef.current;
       const tooltipRect = tooltip.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
-      
+
       const spaceTop = position.top - containerRect.top;
       const spaceBottom = containerRect.bottom - position.bottom;
       const spaceLeft = position.left - containerRect.left;
       const spaceRight = containerRect.right - position.right;
-      
+
       const spaces = [
         { direction: 'top', space: spaceTop },
         { direction: 'right', space: spaceRight },
         { direction: 'bottom', space: spaceBottom },
         { direction: 'left', space: spaceLeft },
       ];
-      
+
       spaces.sort((a, b) => b.space - a.space);
       setPlacement(spaces[0].direction);
     }
   }, [isVisible, position, containerRef]);
-  
+
   if (!isVisible) return null;
 
   const getTooltipStyles = () => {
@@ -57,7 +59,7 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
       maxWidth: '280px',
       width: 'auto',
     } as React.CSSProperties;
-    
+
     switch (placement) {
       case 'top': return { ...baseStyles, bottom: '100%', left: '50%', transform: 'translateX(-50%) translateY(-8px)' };
       case 'right': return { ...baseStyles, left: '100%', top: '50%', transform: 'translateY(-50%) translateX(8px)' };
@@ -66,7 +68,7 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
       default: return baseStyles;
     }
   };
-  
+
   const getArrowStyles = () => {
     const baseStyles = { position: 'absolute', width: '8px', height: '8px', backgroundColor: '#1f2937' } as React.CSSProperties;
     switch (placement) {
@@ -82,22 +84,22 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
   const truncatedText = text.length > maxChars ? `${text.substring(0, maxChars)}...` : text;
 
   // Define smaller heading components specifically for the tooltip markdown
-  const tooltipMarkdownComponents = {
-    h1: ({node, ...props}: any) => <h1 className="text-xs font-bold" {...props} />, 
-    h2: ({node, ...props}: any) => <h2 className="text-[11px] font-bold" {...props} />, 
-    h3: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />,
-    h4: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
-    h5: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
-    h6: ({node, ...props}: any) => <h3 className="text-[10px] font-bold" {...props} />, 
-    p: ({node, ...props}: any) => <p className="text-[10px] mb-1" {...props} />,
-    ul: ({node, ...props}: any) => <ul className="list-disc list-inside text-[10px] mb-1" {...props} />,
-    ol: ({node, ...props}: any) => <ol className="list-decimal list-inside text-[10px] mb-1" {...props} />,
-    li: ({node, ...props}: any) => <li className="text-[10px]" {...props} />,
+  const tooltipMarkdownComponents: Components = {
+    h1: ({children, ...props}) => <h1 className="text-xs font-bold" {...props}>{children}</h1>,
+    h2: ({children, ...props}) => <h2 className="text-[11px] font-bold" {...props}>{children}</h2>,
+    h3: ({children, ...props}) => <h3 className="text-[10px] font-bold" {...props}>{children}</h3>,
+    h4: ({children, ...props}) => <h3 className="text-[10px] font-bold" {...props}>{children}</h3>,
+    h5: ({children, ...props}) => <h3 className="text-[10px] font-bold" {...props}>{children}</h3>,
+    h6: ({children, ...props}) => <h3 className="text-[10px] font-bold" {...props}>{children}</h3>,
+    p: ({children, ...props}) => <p className="text-[10px] mb-1" {...props}>{children}</p>,
+    ul: ({children, ...props}) => <ul className="list-disc list-inside text-[10px] mb-1" {...props}>{children}</ul>,
+    ol: ({children, ...props}) => <ol className="list-decimal list-inside text-[10px] mb-1" {...props}>{children}</ol>,
+    li: ({children, ...props}) => <li className="text-[10px]" {...props}>{children}</li>,
   };
 
   return (
-    <span 
-      ref={tooltipRef} 
+    <span
+      ref={tooltipRef}
       className="bg-gray-800 text-white p-3 rounded shadow-lg text-[10px] min-w-[220px] absolute z-50"
       style={{
         ...getTooltipStyles(),
@@ -112,6 +114,14 @@ const ChunkTooltip = ({ text, isVisible, maxChars = 500, position, containerRef 
         <ReactMarkdown components={tooltipMarkdownComponents}>
           {truncatedText}
         </ReactMarkdown>
+
+        {/* Add document link indicator */}
+        {hasDocumentLink && (
+          <div className="mt-2 pt-2 border-t border-gray-600 text-blue-300 flex items-center">
+            <FileText className="h-3 w-3 mr-1" />
+            <span>Click to open document</span>
+          </div>
+        )}
       </span>
     </span>
   );
@@ -123,7 +133,21 @@ interface AIDocumentProps {
   onSave: (document: string) => void;
   documentUrl?: string | null;
   chunkMap?: Map<string, string>;
-  tenderId?: string; 
+  chunkMetadataMap?: Map<string, ChunkMetadata>;
+  documentsUrlMap?: Map<string, string>;
+  tenderId?: string;
+}
+
+// Define ChunkMetadata interface for type safety
+interface ChunkMetadata {
+  chunk_id: string;
+  level: number;
+  title: string;
+  parent_id: string;
+  pdf_path: string;
+  page_number: number;
+  start_line: number;
+  end_line: number;
 }
 
 // Define AIDocument Component AFTER AIDocumentProps
@@ -132,6 +156,8 @@ const AIDocument = ({
   onSave,
   documentUrl = null,
   chunkMap = new Map(),
+  chunkMetadataMap = new Map(),
+  documentsUrlMap = new Map(),
   tenderId = ""
 }: AIDocumentProps) => {
   // State and Refs
@@ -141,28 +167,175 @@ const AIDocument = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation('ui');
-  
+
   // Effect to update document state when prop changes
   useEffect(() => {
     setDocument(aiDocument);
   }, [aiDocument]);
 
   // Define ChunkReference Component INSIDE AIDocument scope
-  const ChunkReference = ({ 
-    chunkId, 
-    chunkMap, 
-    containerRef 
-  }: { 
-    chunkId: string; 
-    chunkMap: Map<string, string>; 
+  const ChunkReference = ({
+    chunkId,
+    chunkMap,
+    chunkMetadataMap,
+    documentsUrlMap,
+    containerRef
+  }: {
+    chunkId: string;
+    chunkMap: Map<string, string>;
+    chunkMetadataMap: Map<string, ChunkMetadata>;
+    documentsUrlMap: Map<string, string>;
     containerRef: React.RefObject<HTMLDivElement>;
   }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [position, setPosition] = useState({ top: 0, left: 0, bottom: 0, right: 0 });
     const refElement = useRef<HTMLSpanElement>(null);
-    
-    const chunkText = chunkMap.has(chunkId) ? chunkMap.get(chunkId) : `Reference not found: ${chunkId}`;
-    
+
+    // Get the PDF URL for this chunk if available
+    const getDocumentUrl = () => {
+      // First try to get metadata from chunkMetadataMap
+      const metadata = chunkMetadataMap.get(chunkId);
+
+      // If we have proper metadata, use it
+      if (metadata?.pdf_path) {
+        // Extract the filename from the pdf_path
+        const pdfName = metadata.pdf_path.split('/').pop()?.toLowerCase() || '';
+        const pageNumber = metadata.page_number + 1; // Add 1 because PDF pages are 1-indexed
+
+        // Try various matching strategies
+        // 1. Direct match
+        if (documentsUrlMap.has(pdfName)) {
+          return `${documentsUrlMap.get(pdfName)}#page=${pageNumber}`;
+        }
+
+        // 2. Try without extension
+        if (pdfName.endsWith('.pdf')) {
+          const nameWithoutExt = pdfName.slice(0, -4);
+          if (documentsUrlMap.has(nameWithoutExt)) {
+            return `${documentsUrlMap.get(nameWithoutExt)}#page=${pageNumber}`;
+          }
+        }
+
+        // 3. Try fuzzy matching
+        for (const [docKey, url] of documentsUrlMap.entries()) {
+          if (docKey.includes(pdfName) || pdfName.includes(docKey)) {
+            return `${url}#page=${pageNumber}`;
+          }
+        }
+
+        // Fallback: Try matching just based on file extension - find any PDF
+        for (const [docKey, url] of documentsUrlMap.entries()) {
+          if (docKey.endsWith('.pdf') || url.endsWith('.pdf')) {
+            return `${url}#page=${pageNumber}`;
+          }
+        }
+      }
+
+      // Fallback: Parse the chunk ID directly to extract document name and page number
+      // Format: chunk_{document_name},{page_number},{section}
+      try {
+        // First check if this follows the expected format
+        if (chunkId.startsWith('chunk_')) {
+          // Handle possible special characters in chunk IDs
+          let docName = '';
+          let pageNumber = 1;
+
+          const withoutPrefix = chunkId.substring(6); // Remove 'chunk_'
+
+          // Try to split by comma
+          const parts = withoutPrefix.split(',');
+
+          if (parts.length >= 1) {
+            // Get document name from first part
+            docName = parts[0].trim().toLowerCase();
+
+            // Try to extract page number if available
+            if (parts.length >= 2) {
+              try {
+                const parsedPage = parseInt(parts[1].trim(), 10);
+                if (!isNaN(parsedPage)) {
+                  pageNumber = parsedPage + 1; // +1 to convert to 1-indexed PDF pages
+                }
+              } catch (e) {
+                // Just use default page 1 if parsing fails
+              }
+            }
+
+            // If document name is empty, don't try to match
+            if (!docName) return null;
+
+            // Try to find matching document
+            for (const [docKey, url] of documentsUrlMap.entries()) {
+              // Try to match the document name
+              if (docKey.includes(docName) || docName.includes(docKey)) {
+                return `${url}#page=${pageNumber}`;
+              }
+            }
+
+            // Fallback: Try matching just based on file extension - find any PDF
+            for (const [docKey, url] of documentsUrlMap.entries()) {
+              if (docKey.endsWith('.pdf') || url.endsWith('.pdf')) {
+                return `${url}#page=${pageNumber}`;
+              }
+            }
+
+            // Last resort: If no match but we have at least one document, use the first one
+            if (documentsUrlMap.size > 0) {
+              const firstUrl = Array.from(documentsUrlMap.values())[0];
+              return `${firstUrl}#page=${pageNumber}`;
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing chunk ID:', error);
+      }
+
+      return null;
+    };
+
+    // Determine what to display for the chunk text
+    const getChunkDisplayText = () => {
+      // If we have the chunk text in the map, use it
+      if (chunkMap.has(chunkId)) {
+        return chunkMap.get(chunkId) || '';
+      }
+
+      // Otherwise show just the document filename and page
+      try {
+        if (chunkId.startsWith('chunk_')) {
+          const withoutPrefix = chunkId.substring(6); // Remove 'chunk_'
+          const parts = withoutPrefix.split(',');
+
+          if (parts.length >= 1) {
+            // First part is the document name
+            const docName = parts[0].trim();
+
+            // If we have a page number
+            if (parts.length >= 2) {
+              const pageNumber = parseInt(parts[1].trim(), 10);
+              if (!isNaN(pageNumber)) {
+                return `Document: ${docName} - Page ${pageNumber + 1}`;
+              }
+            }
+
+            // If we only have the document name
+            return `Document: ${docName}`;
+          }
+        }
+      } catch (error) {
+        console.error('Error parsing chunk ID for display:', error);
+      }
+
+      // Last resort fallback
+      return `Document reference: ${chunkId}`;
+    };
+
+    const chunkText = getChunkDisplayText();
+    const documentUrl = getDocumentUrl();
+
+    // Determine if we have partial information (only URL but not full chunk text)
+    const hasPartialInfo = documentUrl && !chunkMap.has(chunkId);
+
     const handleMouseEnter = () => {
       if (refElement.current) {
         const rect = refElement.current.getBoundingClientRect();
@@ -170,34 +343,52 @@ const AIDocument = ({
         setIsHovered(true);
       }
     };
-    
+
+    // Add click handler to open the PDF
+    const handleClick = (e: React.MouseEvent) => {
+      e.preventDefault();
+      if (documentUrl) {
+        window.open(documentUrl, '_blank');
+      }
+    };
+
     return (
       <span
         ref={refElement}
-        className="inline-flex items-center text-gober-accent-500 cursor-help relative"
+        className={`inline-flex items-center gap-1 ${
+          documentUrl
+            ? 'text-blue-500 cursor-pointer hover:text-blue-600 hover:underline transition-colors'
+            : 'text-gray-500 cursor-not-allowed'
+        } relative rounded px-1 py-0.5 ${documentUrl ? 'hover:bg-gray-100 dark:hover:bg-gray-800' : ''}`}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={() => setIsHovered(false)}
+        onClick={handleClick}
+        title={documentUrl
+          ? "Click to open the source document"
+          : "Document reference (link not available)"}
       >
-        <FileText className="h-4 w-4" />
-        <ChunkTooltip 
-          text={chunkText || 'Content not available'} 
+        <FileText className={`h-4 w-4 ${documentUrl ? 'text-blue-500' : 'text-gray-500'}`} />
+        <ChunkTooltip
+          text={chunkText || 'Content not available'}
           isVisible={isHovered}
           maxChars={500}
           position={position}
-          containerRef={containerRef} // Pass containerRef down
+          containerRef={containerRef}
+          hasDocumentLink={!!documentUrl}
+          isPartialInfo={hasPartialInfo}
         />
       </span>
     );
   }; // End of ChunkReference
 
   // Define markdownComponents INSIDE AIDocument scope, AFTER ChunkReference
-  const markdownComponents = {
-    p: ({ node, children, ...props }: any) => { 
+  const markdownComponents: Components = {
+    p: ({ children, ...props }) => {
       // Recursive helper function to process nodes within the paragraph
       const processNode = (nodeContent: React.ReactNode, keyPrefix: string = 'node'): React.ReactNode[] => {
         if (typeof nodeContent === 'string') {
-          const chunksRegex = /\[chunk.*?\]/g; 
-          
+          const chunksRegex = /\[chunk.*?]/g;
+
           const parts: React.ReactNode[] = [];
           let lastIndex = 0;
           let match;
@@ -210,7 +401,7 @@ const AIDocument = ({
             }
 
             const chunkReference = match[0];
-            const chunkId = chunkReference.replace(/[\[\]]/g, ''); 
+            const chunkId = chunkReference.replace(/[[\]]/g, '');
 
             if (!chunkId) {
               // Push raw string instead of Fragment
@@ -219,9 +410,11 @@ const AIDocument = ({
               parts.push(
                 <ChunkReference
                   key={`${keyPrefix}-chunk-${partIndex++}-${chunkId}`}
-                  chunkId={chunkId} 
-                  chunkMap={chunkMap} 
-                  containerRef={containerRef} 
+                  chunkId={chunkId}
+                  chunkMap={chunkMap}
+                  chunkMetadataMap={chunkMetadataMap}
+                  documentsUrlMap={documentsUrlMap}
+                  containerRef={containerRef}
                 />
               );
             }
@@ -232,10 +425,10 @@ const AIDocument = ({
             // Push raw string instead of Fragment
             parts.push(nodeContent.slice(lastIndex));
           }
-          
+
           // If parts array is empty, it means no chunks found in this string segment
           return parts.length > 0 ? parts : [nodeContent]; // Return original string if no chunks
-          
+
         } else if (Array.isArray(nodeContent)) {
           // Process arrays recursively
           return nodeContent.flatMap((item, index) => processNode(item, `${keyPrefix}-arr-${index}`)).filter(Boolean); // Filter out null/undefined
@@ -267,14 +460,14 @@ const AIDocument = ({
       const validProcessedChildren = processedChildren.filter(child => child !== null && child !== undefined);
 
       // Return the paragraph element with processed children
-      return <p>{validProcessedChildren}</p>; 
+      return <p {...props}>{validProcessedChildren}</p>;
     },
     // Add renderer for list items (li) using the same logic
-    li: ({ node, children, ...props }: any) => { 
+    li: ({ children, ...props }) => {
       // Replicate the recursive helper function for list items
       const processNode = (nodeContent: React.ReactNode, keyPrefix: string = 'node'): React.ReactNode[] => {
         if (typeof nodeContent === 'string') {
-          const chunksRegex = /\[chunk.*?\]/g; 
+          const chunksRegex = /\[chunk.*?]/g;
           const parts: React.ReactNode[] = [];
           let lastIndex = 0;
           let match;
@@ -286,7 +479,7 @@ const AIDocument = ({
               parts.push(nodeContent.slice(lastIndex, match.index));
             }
             const chunkReference = match[0];
-            const chunkId = chunkReference.replace(/[\[\]]/g, ''); 
+            const chunkId = chunkReference.replace(/[[\]]/g, '');
             if (!chunkId) {
               // Push raw string instead of Fragment
               parts.push(chunkReference);
@@ -294,9 +487,11 @@ const AIDocument = ({
               parts.push(
                 <ChunkReference
                   key={`${keyPrefix}-chunk-${partIndex++}-${chunkId}`}
-                  chunkId={chunkId} 
-                  chunkMap={chunkMap} 
-                  containerRef={containerRef} 
+                  chunkId={chunkId}
+                  chunkMap={chunkMap}
+                  chunkMetadataMap={chunkMetadataMap}
+                  documentsUrlMap={documentsUrlMap}
+                  containerRef={containerRef}
                 />
               );
             }
@@ -321,7 +516,7 @@ const AIDocument = ({
                   return [nodeContent];
                }
            } else {
-               return [nodeContent]; 
+               return [nodeContent];
            }
         }
         return [];
@@ -330,10 +525,10 @@ const AIDocument = ({
       const processedChildren = processNode(children, 'li-root');
       const validProcessedChildren = processedChildren.filter(child => child !== null && child !== undefined);
       // Return the list item element
-      return <li>{validProcessedChildren}</li>; 
+      return <li {...props}>{validProcessedChildren}</li>;
     },
   }; // End of markdownComponents
-  
+
   // Define Handlers INSIDE AIDocument scope
   const handleSave = async () => {
     setIsSaving(true);
@@ -386,13 +581,13 @@ const AIDocument = ({
           {t('aiSummary.markdown_support')}
         </div>
         {isEditing ? (
-          <Textarea 
+          <Textarea
             ref={textareaRef} // Use ref correctly
-            value={document} 
-            onChange={handleChange} 
-            onFocus={handleTextareaFocus} 
-            placeholder="AI-generated document will appear here. This supports markdown formatting..." 
-            className="min-h-[400px] resize-y border-gray-200 focus:border-gober-accent-500 transition-all duration-200 font-mono" 
+            value={document}
+            onChange={handleChange}
+            onFocus={handleTextareaFocus}
+            placeholder="AI-generated document will appear here. This supports markdown formatting..."
+            className="min-h-[400px] resize-y border-gray-200 focus:border-gober-accent-500 transition-all duration-200 font-mono"
           />
         ) : (
           <div ref={containerRef} // Use ref correctly
