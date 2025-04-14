@@ -244,11 +244,16 @@ export async function fetchTenders(params: TenderParams = {}): Promise<Paginated
     
     // Add category filters
     if (params.categories && params.categories.length > 0) {
-      params.categories.forEach(category => {
-        const code = category.includes(' - ') 
-          ? category.split(' - ')[0].trim() 
-          : category;
-        filtersForBody.push({ name: 'category', value: code });
+      // Extract all CPV codes
+      const codes = params.categories.map(category => 
+        category.includes(' - ') ? category.split(' - ')[0].trim() : category
+      );
+      // Add a single filter with all CPV codes
+      filtersForBody.push({ 
+        name: 'cps', 
+        value: codes, 
+        operator: 'IN',  // Explicitly set to IN operator for OR behavior
+        expression: 'OR' // Add expression for clarity
       });
     }
     
